@@ -19,3 +19,18 @@ bin-release/
 
 # Large dataset files - download separately
 Datasets/
+
+# Environment files with secrets
+.env
+
+# Large media files
+*.mp4
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
