@@ -21,6 +21,9 @@ bin-release/
 # Environment files with secrets
 .env
 
+# Large dataset files (Census, CDC, etc.) — keep small docs
+/Datasets/ACS*/
+/Datasets/Multiple Cause of Death*
 # Large media files
 *.mp4
 # Python
