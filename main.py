@@ -16,6 +16,11 @@ Usage
     python main.py q5               # only Q5 (by specialty)
     python main.py q4q5             # Q4 + Q5 together
     python main.py q3q4q5           # Q3 + Q4 + Q5 together
+    python main.py extended         # all 4 extended queries (Q6-Q9)
+    python main.py q6               # only Q6 (state × year)
+    python main.py q7               # only Q7 (retail vs mail order)
+    python main.py q8               # only Q8 (monthly seasonality)
+    python main.py q9               # only Q9 (stratified 2018 sample)
     python main.py geo              # only geographic / zip-code queries
     python main.py geo-light        # only state-level + zip % (faster)
     python main.py census           # load & combine Census ACS tables
@@ -30,6 +35,7 @@ import time
 from queries import explore_payors
 from queries import medicaid_vs_general
 from queries import geographic
+from queries import extended
 from census import load_census
 from census import merge_iqvia_census
 from cdc import load_wonder
@@ -138,10 +144,67 @@ def run_q5():
     print(f"  Q5 done in {(time.time()-t0)/60:.1f} min")
 
 
-def run_cdc():
-    """Step 6 – Merge IQVIA state data with CDC WONDER overdose deaths."""
+def run_extended():
+    """Step 6 – Extended queries: state×year, retail/mail, monthly, 2018 sample."""
     print("\n" + "=" * 60)
-    print("STEP 6: MERGE IQVIA + CDC WONDER OVERDOSE DATA")
+    print("STEP 6: EXTENDED QUERIES (Q6–Q9)")
+    print("=" * 60)
+    extended.run_all(save=True)
+
+
+def run_q6():
+    """Run only Q6 (State × Year × Medicaid)."""
+    print("\n" + "=" * 60)
+    print("Q6: MEDICAID vs NON-MEDICAID BY STATE × YEAR")
+    print("=" * 60)
+    t0 = time.time()
+    df = extended.opioid_rx_by_state_year_medicaid()
+    print(df.head(20).to_string(index=False))
+    export_to_csv(df, "medicaid_vs_nonmedicaid_by_state_year.csv")
+    print(f"  Q6 done in {(time.time()-t0)/60:.1f} min")
+
+
+def run_q7():
+    """Run only Q7 (Retail vs Mail Order)."""
+    print("\n" + "=" * 60)
+    print("Q7: RETAIL vs MAIL ORDER BY MEDICAID STATUS")
+    print("=" * 60)
+    t0 = time.time()
+    df = extended.opioid_rx_by_sales_channel_year()
+    print(df.head(20).to_string(index=False))
+    export_to_csv(df, "medicaid_vs_nonmedicaid_by_sales_channel.csv")
+    print(f"  Q7 done in {(time.time()-t0)/60:.1f} min")
+
+
+def run_q8():
+    """Run only Q8 (Monthly Seasonality)."""
+    print("\n" + "=" * 60)
+    print("Q8: MONTHLY SEASONALITY BY MEDICAID STATUS")
+    print("=" * 60)
+    t0 = time.time()
+    df = extended.opioid_rx_by_month_medicaid()
+    print(df.head(20).to_string(index=False))
+    export_to_csv(df, "medicaid_vs_nonmedicaid_by_month.csv")
+    print(f"  Q8 done in {(time.time()-t0)/60:.1f} min")
+
+
+def run_q9():
+    """Run only Q9 (Stratified 2018 Sample for logistic regression)."""
+    print("\n" + "=" * 60)
+    print("Q9: STRATIFIED 2018 SAMPLE (~2M ROWS)")
+    print("=" * 60)
+    t0 = time.time()
+    df = extended.stratified_sample_2018(target_rows=2_000_000)
+    print(f"     Shape: {df.shape}")
+    print(f"     Medicaid %: {df['is_medicaid'].mean()*100:.2f}%")
+    export_to_csv(df, "sample_2018_for_regression.csv")
+    print(f"  Q9 done in {(time.time()-t0)/60:.1f} min")
+
+
+def run_cdc():
+    """Step 7 – Merge IQVIA state data with CDC WONDER overdose deaths."""
+    print("\n" + "=" * 60)
+    print("STEP 7: MERGE IQVIA + CDC WONDER OVERDOSE DATA")
     print("=" * 60)
     df = merge_iqvia_cdc.merge_iqvia_cdc()
     if not df.empty:
@@ -184,6 +247,20 @@ def main():
     elif mode == "q4q5":
         run_q4()
         run_q5()
+    elif mode == "extended":
+        run_extended()
+    elif mode == "q6":
+        run_q6()
+    elif mode == "q7":
+        run_q7()
+    elif mode == "q8":
+        run_q8()
+    elif mode == "q9":
+        run_q9()
+    elif mode == "q6q7q8":
+        run_q6()
+        run_q7()
+        run_q8()
     elif mode == "geo":
         run_geo(light=False)
     elif mode == "geo-light":
@@ -201,7 +278,8 @@ def main():
         run_census()
         run_merge()
     else:
-        print(f"Unknown mode '{mode}'. Use: explore | medicaid | q3 | q4 | q5 | q3q4q5 | q4q5 | geo | geo-light | census | merge | cdc | all")
+        print(f"Unknown mode '{mode}'. Use: explore | medicaid | q3 | q4 | q5 | q3q4q5 | q4q5 | "
+              f"extended | q6 | q7 | q8 | q9 | q6q7q8 | geo | geo-light | census | merge | cdc | all")
         sys.exit(1)
 
     elapsed = time.time() - start
