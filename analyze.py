@@ -219,18 +219,22 @@ def main():
     # Format A: year-level (Q1 output) — has 'year', 'is_medicaid', 'avg_mme'
     # Format B: zip-level (test_indiana) — has 'zip_code', 'is_medicaid', 'avg_mme'
     # Format C: pct summary (Q2 output) — has 'pct_medicaid'
+    # Format D: state-level (Q3) — has 'state', 'is_medicaid'
+    # Format E: drug-level (Q4) — has 'active_ingredient', 'is_medicaid'
+    # Format F: specialty-level (Q5) — has 'specialty', 'is_medicaid'
 
     if "pct_medicaid" in cols:
-        # ── Format C: Q2 percentage summary ──
         analyze_pct_summary(df, args)
     elif "year" in cols and "is_medicaid" in cols:
-        # ── Format A: year-level ──
-        unit = "year"
-        analyze_grouped(df, unit, args)
+        analyze_grouped(df, "year", args)
     elif "zip_code" in cols and "is_medicaid" in cols:
-        # ── Format B: zip-level (original) ──
-        unit = "zip_code"
-        analyze_grouped(df, unit, args)
+        analyze_grouped(df, "zip_code", args)
+    elif "state" in cols and "is_medicaid" in cols:
+        analyze_grouped(df, "state", args)
+    elif "active_ingredient" in cols and "is_medicaid" in cols:
+        analyze_grouped(df, "active_ingredient", args)
+    elif "specialty" in cols and "is_medicaid" in cols:
+        analyze_grouped(df, "specialty", args)
     else:
         print(f"\n❌ Unrecognized format. Columns: {list(df.columns)}")
         sys.exit(1)

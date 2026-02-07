@@ -49,7 +49,7 @@ def test_connection():
                     WHERE relname = '{table_name}';
                 """)
                 row_count = cursor.fetchone()[0]
-                warning = " ⚠️  DO NOT SELECT * !" if row_count > 1000000 else ""
+                warning = " DO NOT SELECT * !" if row_count > 1000000 else ""
                 print(f"  {table_name}: ~{row_count:,} rows, {col_count} columns{warning}")
             
             # Show schema for each table
