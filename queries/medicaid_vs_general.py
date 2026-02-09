@@ -232,7 +232,7 @@ def run_all(save: bool = True):
     print(df1.head(10).to_string(index=False))
     results["by_year"] = df1
     if save:
-        export_to_csv(df1, "medicaid_vs_nonmedicaid_by_year.csv")
+        export_to_csv(df1, "medicaid_vs_nonmedicaid_by_year.csv", subdir="iqvia_core")
 
     # ── Q2: % share (FREE from Q1) ──
     print("\n📊 2/5  Percentage Medicaid vs Non-Medicaid by year …")
@@ -242,7 +242,7 @@ def run_all(save: bool = True):
     print(df2.to_string(index=False))
     results["pct_year"] = df2
     if save:
-        export_to_csv(df2, "medicaid_pct_by_year.csv")
+        export_to_csv(df2, "medicaid_pct_by_year.csv", subdir="iqvia_core")
 
     # ── Q3: by state ──
     print("\n📊 3/5  Medicaid vs Non-Medicaid by state …")
@@ -250,7 +250,7 @@ def run_all(save: bool = True):
     print(df3.head(20).to_string(index=False))
     results["by_state"] = df3
     if save:
-        export_to_csv(df3, "medicaid_vs_nonmedicaid_by_state.csv")
+        export_to_csv(df3, "medicaid_vs_nonmedicaid_by_state.csv", subdir="iqvia_core")
 
     # ── Q4: by drug ──
     print("\n📊 4/5  Medicaid vs Non-Medicaid by drug (active ingredient) …")
@@ -258,7 +258,7 @@ def run_all(save: bool = True):
     print(df4.head(20).to_string(index=False))
     results["by_drug"] = df4
     if save:
-        export_to_csv(df4, "medicaid_vs_nonmedicaid_by_drug.csv")
+        export_to_csv(df4, "medicaid_vs_nonmedicaid_by_drug.csv", subdir="iqvia_core")
 
     # ── Q5: by specialty ──
     print("\n📊 5/5  Medicaid vs Non-Medicaid by prescriber specialty …")
@@ -266,7 +266,7 @@ def run_all(save: bool = True):
     print(df5.head(20).to_string(index=False))
     results["by_specialty"] = df5
     if save:
-        export_to_csv(df5, "medicaid_vs_nonmedicaid_by_specialty.csv")
+        export_to_csv(df5, "medicaid_vs_nonmedicaid_by_specialty.csv", subdir="iqvia_core")
 
     total = time.time() - t_start
     print(f"\n🏁 All 5 queries complete — total {total/60:.1f} min")

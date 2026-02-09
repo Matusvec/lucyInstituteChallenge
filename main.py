@@ -21,6 +21,7 @@ Usage
     python main.py q7               # only Q7 (retail vs mail order)
     python main.py q8               # only Q8 (monthly seasonality)
     python main.py q9               # only Q9 (stratified 2018 sample)
+    python main.py pillmill          # prescriber concentration / pill mill analysis
     python main.py geo              # only geographic / zip-code queries
     python main.py geo-light        # only state-level + zip % (faster)
     python main.py census           # load & combine Census ACS tables
@@ -36,6 +37,7 @@ from queries import explore_payors
 from queries import medicaid_vs_general
 from queries import geographic
 from queries import extended
+from queries import pill_mill
 from census import load_census
 from census import merge_iqvia_census
 from cdc import load_wonder
@@ -87,12 +89,12 @@ def run_geo(light: bool = False):
         print("\n  Zip-level Medicaid vs Non-Medicaid …")
         df_zip = geographic.opioid_rx_by_zip_medicaid()
         print(df_zip.head(20).to_string(index=False))
-        export_to_csv(df_zip, "geo_zip_medicaid.csv")
+        export_to_csv(df_zip, "geo_zip_medicaid.csv", subdir="iqvia_core")
 
         print("\n  Medicaid % by zip code (derived from above — no DB call) …")
         df_pct = geographic.medicaid_pct_by_zipcode(df_zip)
         print(df_pct.head(20).to_string(index=False))
-        export_to_csv(df_pct, "geo_zip_medicaid_pct.csv")
+        export_to_csv(df_pct, "geo_zip_medicaid_pct.csv", subdir="iqvia_core")
     else:
         geographic.run_all(save=True)
 
@@ -114,7 +116,7 @@ def run_q3():
     t0 = time.time()
     df = medicaid_vs_general.opioid_rx_medicaid_by_state()
     print(df.head(20).to_string(index=False))
-    export_to_csv(df, "medicaid_vs_nonmedicaid_by_state.csv")
+    export_to_csv(df, "medicaid_vs_nonmedicaid_by_state.csv", subdir="iqvia_core")
     print(f"  Q3 done in {(time.time()-t0)/60:.1f} min")
 
 
@@ -127,7 +129,7 @@ def run_q4():
     t0 = time.time()
     df = medicaid_vs_general.opioid_rx_medicaid_by_drug()
     print(df.head(20).to_string(index=False))
-    export_to_csv(df, "medicaid_vs_nonmedicaid_by_drug.csv")
+    export_to_csv(df, "medicaid_vs_nonmedicaid_by_drug.csv", subdir="iqvia_core")
     print(f"  Q4 done in {(time.time()-t0)/60:.1f} min")
 
 
@@ -140,7 +142,7 @@ def run_q5():
     t0 = time.time()
     df = medicaid_vs_general.opioid_rx_medicaid_by_specialty()
     print(df.head(20).to_string(index=False))
-    export_to_csv(df, "medicaid_vs_nonmedicaid_by_specialty.csv")
+    export_to_csv(df, "medicaid_vs_nonmedicaid_by_specialty.csv", subdir="iqvia_core")
     print(f"  Q5 done in {(time.time()-t0)/60:.1f} min")
 
 
@@ -160,7 +162,7 @@ def run_q6():
     t0 = time.time()
     df = extended.opioid_rx_by_state_year_medicaid()
     print(df.head(20).to_string(index=False))
-    export_to_csv(df, "medicaid_vs_nonmedicaid_by_state_year.csv")
+    export_to_csv(df, "medicaid_vs_nonmedicaid_by_state_year.csv", subdir="extended")
     print(f"  Q6 done in {(time.time()-t0)/60:.1f} min")
 
 
@@ -172,7 +174,7 @@ def run_q7():
     t0 = time.time()
     df = extended.opioid_rx_by_sales_channel_year()
     print(df.head(20).to_string(index=False))
-    export_to_csv(df, "medicaid_vs_nonmedicaid_by_sales_channel.csv")
+    export_to_csv(df, "medicaid_vs_nonmedicaid_by_sales_channel.csv", subdir="extended")
     print(f"  Q7 done in {(time.time()-t0)/60:.1f} min")
 
 
@@ -184,7 +186,7 @@ def run_q8():
     t0 = time.time()
     df = extended.opioid_rx_by_month_medicaid()
     print(df.head(20).to_string(index=False))
-    export_to_csv(df, "medicaid_vs_nonmedicaid_by_month.csv")
+    export_to_csv(df, "medicaid_vs_nonmedicaid_by_month.csv", subdir="extended")
     print(f"  Q8 done in {(time.time()-t0)/60:.1f} min")
 
 
@@ -197,9 +199,15 @@ def run_q9():
     df = extended.stratified_sample_2018(target_rows=2_000_000)
     print(f"     Shape: {df.shape}")
     print(f"     Medicaid %: {df['is_medicaid'].mean()*100:.2f}%")
-    export_to_csv(df, "sample_2018_for_regression.csv")
+    export_to_csv(df, "sample_2018_for_regression.csv", subdir="extended")
     print(f"  Q9 done in {(time.time()-t0)/60:.1f} min")
 
+def run_pillmill():
+    """Prescriber concentration / pill mill analysis."""
+    print("\n" + "=" * 60)
+    print("PILL MILL ANALYSIS — PRESCRIBER CONCENTRATION")
+    print("=" * 60)
+    pill_mill.run_all(save=True)
 
 def run_cdc():
     """Step 7 – Merge IQVIA state data with CDC WONDER overdose deaths."""
@@ -208,7 +216,7 @@ def run_cdc():
     print("=" * 60)
     df = merge_iqvia_cdc.merge_iqvia_cdc()
     if not df.empty:
-        export_to_csv(df, "iqvia_cdc_merged_by_state.csv")
+        export_to_csv(df, "iqvia_cdc_merged_by_state.csv", subdir="cdc")
         merge_iqvia_cdc.analyze_merged(df)
 
 
@@ -261,6 +269,8 @@ def main():
         run_q6()
         run_q7()
         run_q8()
+    elif mode == "pillmill":
+        run_pillmill()
     elif mode == "geo":
         run_geo(light=False)
     elif mode == "geo-light":
@@ -279,7 +289,7 @@ def main():
         run_merge()
     else:
         print(f"Unknown mode '{mode}'. Use: explore | medicaid | q3 | q4 | q5 | q3q4q5 | q4q5 | "
-              f"extended | q6 | q7 | q8 | q9 | q6q7q8 | geo | geo-light | census | merge | cdc | all")
+              f"extended | q6 | q7 | q8 | q9 | q6q7q8 | pillmill | geo | geo-light | census | merge | cdc | all")
         sys.exit(1)
 
     elapsed = time.time() - start

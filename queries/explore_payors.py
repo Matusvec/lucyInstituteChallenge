@@ -61,12 +61,12 @@ def run_all(save: bool = True):
         print(medicaid.to_string(index=False))
 
     if save:
-        export_to_csv(summary,  "payor_plan_summary.csv")
-        export_to_csv(medicaid, "medicaid_plan_ids.csv")
+        export_to_csv(summary,  "payor_plan_summary.csv", subdir="lookups")
+        export_to_csv(medicaid, "medicaid_plan_ids.csv", subdir="lookups")
 
         # Also dump full table for reference
         full = get_all_payor_plans()
-        export_to_csv(full, "payor_plan_full.csv")
+        export_to_csv(full, "payor_plan_full.csv", subdir="lookups")
 
     return summary, medicaid
 

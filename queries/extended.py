@@ -293,7 +293,7 @@ def run_all(save: bool = True):
     print(df6.head(20).to_string(index=False))
     results["state_year"] = df6
     if save:
-        export_to_csv(df6, "medicaid_vs_nonmedicaid_by_state_year.csv")
+        export_to_csv(df6, "medicaid_vs_nonmedicaid_by_state_year.csv", subdir="extended")
 
     # ── Q7: Retail vs Mail Order ──
     print("\n📊 Q7  Opioid Rx by sales channel (Retail vs Mail Order) × year …")
@@ -301,7 +301,7 @@ def run_all(save: bool = True):
     print(df7.head(20).to_string(index=False))
     results["sales_channel"] = df7
     if save:
-        export_to_csv(df7, "medicaid_vs_nonmedicaid_by_sales_channel.csv")
+        export_to_csv(df7, "medicaid_vs_nonmedicaid_by_sales_channel.csv", subdir="extended")
 
     # ── Q8: Monthly Seasonality ──
     print("\n📊 Q8  Opioid Rx by month × year × Medicaid status …")
@@ -309,7 +309,7 @@ def run_all(save: bool = True):
     print(df8.head(20).to_string(index=False))
     results["monthly"] = df8
     if save:
-        export_to_csv(df8, "medicaid_vs_nonmedicaid_by_month.csv")
+        export_to_csv(df8, "medicaid_vs_nonmedicaid_by_month.csv", subdir="extended")
 
     # ── Q9: Stratified 2018 Sample ──
     print("\n📊 Q9  Stratified 2018 random sample (~2M rows) for logistic regression …")
@@ -319,7 +319,7 @@ def run_all(save: bool = True):
     print(f"     Columns: {list(df9.columns)}")
     results["sample_2018"] = df9
     if save:
-        export_to_csv(df9, "sample_2018_for_regression.csv")
+        export_to_csv(df9, "sample_2018_for_regression.csv", subdir="extended")
 
     total = time.time() - t_start
     print(f"\n🏁 All extended queries complete — total {total/60:.1f} min")

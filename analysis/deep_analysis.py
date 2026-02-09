@@ -12,10 +12,19 @@ from scipy.stats import chi2_contingency, spearmanr, pearsonr, linregress
 import os, warnings
 warnings.filterwarnings("ignore")
 
-OUT = os.path.join(os.path.dirname(__file__), "output")
+OUT = os.path.join(os.path.dirname(os.path.dirname(__file__)), "output")
 
 def load(name):
-    return pd.read_csv(os.path.join(OUT, name))
+    """Load a CSV from output/, searching subdirectories if needed."""
+    direct = os.path.join(OUT, name)
+    if os.path.exists(direct):
+        return pd.read_csv(direct)
+    # Search subdirectories
+    for sub in os.listdir(OUT):
+        candidate = os.path.join(OUT, sub, name)
+        if os.path.isfile(candidate):
+            return pd.read_csv(candidate)
+    raise FileNotFoundError(f"Cannot find {name} in {OUT} or subdirectories")
 
 def section(title):
     print(f"\n{'═'*70}")

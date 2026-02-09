@@ -172,7 +172,7 @@ def run_all(save: bool = True):
     print(df1.head(10).to_string(index=False))
     results["zip_medicaid"] = df1
     if save:
-        export_to_csv(df1, "geo_zip_medicaid.csv")
+        export_to_csv(df1, "geo_zip_medicaid.csv", subdir="iqvia_core")
 
     # ── Q2: zip × year (year-by-year) ──
     print("\n🗺️  2/4  Opioid Rx by zip × year × Medicaid status …")
@@ -180,7 +180,7 @@ def run_all(save: bool = True):
     print(df2.head(10).to_string(index=False))
     results["zip_year_medicaid"] = df2
     if save:
-        export_to_csv(df2, "geo_zip_year_medicaid.csv")
+        export_to_csv(df2, "geo_zip_year_medicaid.csv", subdir="iqvia_core")
 
     # ── Q3: state-level (year-by-year, prescriber JOIN only) ──
     print("\n🗺️  3/4  Opioid Rx by state × Medicaid status …")
@@ -188,7 +188,7 @@ def run_all(save: bool = True):
     print(df3.head(20).to_string(index=False))
     results["state_medicaid"] = df3
     if save:
-        export_to_csv(df3, "geo_state_medicaid.csv")
+        export_to_csv(df3, "geo_state_medicaid.csv", subdir="iqvia_core")
 
     # ── Q4: Medicaid % by zip — FREE from Q1 ──
     print("\n🗺️  4/4  Medicaid % by zip code …")
@@ -198,7 +198,7 @@ def run_all(save: bool = True):
     print(df4.head(20).to_string(index=False))
     results["zip_pct_medicaid"] = df4
     if save:
-        export_to_csv(df4, "geo_zip_medicaid_pct.csv")
+        export_to_csv(df4, "geo_zip_medicaid_pct.csv", subdir="iqvia_core")
 
     total = time.time() - t_start
     print(f"\n🏁 Geographic queries complete — total {total / 60:.1f} min")

@@ -96,4 +96,4 @@ if __name__ == "__main__":
     national["national_rate"] = (national["total_deaths"] / national["total_pop"] * 100_000).round(1)
     print(national.to_string(index=False))
     
-    export_to_csv(df, "cdc_overdose_by_state_year.csv")
+    export_to_csv(df, "cdc_overdose_by_state_year.csv", subdir="cdc")

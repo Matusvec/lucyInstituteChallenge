@@ -30,7 +30,7 @@ def _load_iqvia_zip_data() -> pd.DataFrame:
     Load the IQVIA zip-level Medicaid vs Non-Medicaid data.
     Tries the pre-saved CSV first; if it doesn't exist, runs the query live.
     """
-    csv_path = os.path.join(OUTPUT_DIR, "geo_zip_medicaid_vs_nonmedicaid.csv")
+    csv_path = os.path.join(OUTPUT_DIR, "iqvia_core", "geo_zip_medicaid_vs_nonmedicaid.csv")
     if os.path.exists(csv_path):
         print(f"📂 Loading cached IQVIA zip data from {csv_path}")
         return pd.read_csv(csv_path, dtype={"zip_code": str})
@@ -45,7 +45,7 @@ def _load_iqvia_zip_data() -> pd.DataFrame:
 
 def _load_iqvia_zip_pct() -> pd.DataFrame:
     """Load the Medicaid-% per zip CSV, or run the query."""
-    csv_path = os.path.join(OUTPUT_DIR, "geo_zip_medicaid_pct.csv")
+    csv_path = os.path.join(OUTPUT_DIR, "iqvia_core", "geo_zip_medicaid_pct.csv")
     if os.path.exists(csv_path):
         print(f"📂 Loading cached Medicaid-% zip data from {csv_path}")
         return pd.read_csv(csv_path, dtype={"zip_code": str})

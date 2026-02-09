@@ -49,7 +49,7 @@ ACA_EXPANSION_STATES = {
 
 def _load_iqvia_state_data() -> pd.DataFrame:
     """Load the Q3 state-level CSV if it exists."""
-    csv_path = os.path.join(OUTPUT_DIR, "medicaid_vs_nonmedicaid_by_state.csv")
+    csv_path = os.path.join(OUTPUT_DIR, "iqvia_core", "medicaid_vs_nonmedicaid_by_state.csv")
     if os.path.exists(csv_path):
         print(f"📂 Loading IQVIA state data from {csv_path}")
         return pd.read_csv(csv_path, dtype={"state": str})

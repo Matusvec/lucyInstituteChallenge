@@ -14,7 +14,7 @@ import os
 import psycopg2
 import psycopg2.extras
 import pandas as pd
-from db_connect import DB_CONFIG
+from utils.db_connect import DB_CONFIG
 
 OUTPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "output")
 
@@ -116,10 +116,11 @@ def _load_lookups():
           f"{len(_opioid_pgs)} opioid PGs  ({time.time()-t0:.1f}s)")
 
 
-def export_to_csv(df: pd.DataFrame, filename: str) -> str:
-    """Save a DataFrame to a CSV file in the output/ directory."""
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
-    filepath = os.path.join(OUTPUT_DIR, filename)
+def export_to_csv(df: pd.DataFrame, filename: str, subdir: str = None) -> str:
+    """Save a DataFrame to a CSV file in the output/ directory (or a subfolder)."""
+    target = os.path.join(OUTPUT_DIR, subdir) if subdir else OUTPUT_DIR
+    os.makedirs(target, exist_ok=True)
+    filepath = os.path.join(target, filename)
     df.to_csv(filepath, index=False)
     print(f"  ✅ Saved {len(df):,} rows → {filepath}")
     return filepath

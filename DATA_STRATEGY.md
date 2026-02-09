@@ -6,16 +6,16 @@
 
 ---
 
-## 1. What We're Working With
+## 1. Database Schema
 
-### Database at a Glance
+### Tables
 
 | Table | Rows | Purpose |
 |---|---|---|
 | **main** | **2.13 billion** | One row per prescription (1997–2018). Cannot download whole table. |
 | **drug** | 4,067 | Drug details — active ingredient, dosage, MME, drug class (`usc`). |
 | **payor_plan** | 15,088 | Payment plan names and variants. |
-| **prescriber_limited** | 1,958,685 | Prescriber specialty, state, and **zip code**. |
+| **prescriber_limited** | 1,958,685 | Prescriber specialty, state, and zip code. |
 
 ### Key Relationships (JOINs)
 
@@ -30,21 +30,21 @@ main.prescriber_key ───►  prescriber_limited.prescriber_key  (who wrote 
 - `new_rx`, `total_rx`, `new_qty`, `total_qty` must all be **divided by 1000** to get real values.
 - All opioid drugs have `drug.usc LIKE '022%'`.
 - MME (Morphine Milligram Equivalents) via `drug.mme_per_unit` standardises potency across drugs.
+- **2018 data is truncated** (~3.6 months / Q1 only).
 
 ---
 
-## 2. How We Identify Medicaid
+## 2. Medicaid Identification
 
-We ran an exploration query on `payor_plan` and found **71 plans** whose name contains the word "Medicaid":
+**71 payor plans** whose name contains "Medicaid":
 
 | Category | Count | Examples |
 |---|---|---|
-| **State Medicaid programs** | 53 | `MEDICAID ALABAMA (AL)`, `MEDICAID CALIFORNIA (CA)`, … every US state + DC + PR |
-| **Medicaid managed-care / HMO** | 17 | `PRIORITY HEALTH MEDICAID (MI)`, `SIMPLY HEALTHCARE MEDICAID (FL)`, `HIP MEDICAID (NY)`, etc. |
-| **Generic / unspecified** | 1 | `MEDICAID UNSPECIFIED` |
+| State Medicaid programs | 53 | `MEDICAID ALABAMA (AL)`, `MEDICAID CALIFORNIA (CA)`, … |
+| Medicaid managed-care / HMO | 17 | `PRIORITY HEALTH MEDICAID (MI)`, `SIMPLY HEALTHCARE MEDICAID (FL)` |
+| Generic / unspecified | 1 | `MEDICAID UNSPECIFIED` |
 
-**Classification rule used in all queries:**
-
+**SQL classification:**
 ```sql
 CASE
     WHEN pp.payor_plan ILIKE '%medicaid%'
@@ -54,145 +54,109 @@ CASE
 END
 ```
 
-The remaining ~15,017 plans fall into "Non-Medicaid" — these include commercial insurance, Medicare, employer plans, cash pay, workers' comp, discount cards, etc.  This gives us the **Medicaid vs everybody else** comparison the research question asks for.
-
 ---
 
-## 3. Query Strategy (Built & Ready to Run)
+## 3. Query Modules
 
-Every query filters to **opioids only** (`usc LIKE '022%'`) and splits results by Medicaid vs Non-Medicaid.  Because the `main` table has 2.1 B rows, we **never** `SELECT *` — every query aggregates with `GROUP BY` so the database does the heavy lifting and returns a manageable result set.
+### Module 1 — `queries/medicaid_vs_general.py` (Q1–Q5)
 
-### Module 1 — `queries/medicaid_vs_general.py` (5 queries)
-
-| # | Query | What It Answers | Key Columns |
+| # | Query | What It Answers | Runtime |
 |---|---|---|---|
-| 1 | **By Year** | How do total opioid Rx volumes compare Medicaid vs Non-Medicaid, year over year (1997–2018)? | `year`, `is_medicaid`, `total_rx`, `new_rx`, `total_qty`, `avg_mme` |
-| 2 | **% Share by Year** | What *percentage* of all opioid Rx are Medicaid each year? Is it growing or shrinking? | `year`, `pct_medicaid`, `pct_non_medicaid` |
-| 3 | **By State** | Which states have the biggest Medicaid vs Non-Medicaid opioid gap? | `state`, `is_medicaid`, `total_rx`, `avg_mme` |
-| 4 | **By Drug (Active Ingredient)** | Do Medicaid patients get prescribed *different* opioids than non-Medicaid patients? (e.g. more generic vs brand-name, higher MME drugs?) | `active_ingredient`, `is_medicaid`, `total_rx`, `avg_mme` |
-| 5 | **By Prescriber Specialty** | Which doctor specialties write the most Medicaid opioid Rx? Do pain clinics or primary care dominate? | `specialty`, `is_medicaid`, `total_rx`, `avg_mme` |
+| Q1 | **By Year** | Total Rx, MME by Medicaid status per year | ~60 min |
+| Q2 | **% Share by Year** | Medicaid's % of all opioid Rx each year | derived |
+| Q3 | **By State** | State-level Medicaid vs Non-Medicaid totals (all years) | ~136 min |
+| Q4 | **By Drug** | Per-drug Medicaid vs Non-Medicaid MME and volume | ~98 min |
+| Q5 | **By Specialty** | Per-specialty Medicaid vs Non-Medicaid volume | ~171 min |
 
-### Module 2 — `queries/geographic.py` (4 queries)
+### Module 2 — `queries/extended.py` (Q6–Q9)
 
-| # | Query | What It Answers | Key Columns |
+| # | Query | What It Answers | Runtime |
 |---|---|---|---|
-| 1 | **Zip Code — Medicaid vs Non-Medicaid** | Per-zip totals for joining with a US shapefile → choropleth map | `zip_code`, `state`, `is_medicaid`, `total_rx`, `avg_mme`, `prescriber_count` |
-| 2 | **Zip Code × Year** | Same but year-by-year — enables animated/time-lapse maps or pre/post policy comparisons | `zip_code`, `state`, `year`, `is_medicaid`, `total_rx` |
-| 3 | **State Level** | Lighter-weight state-level summary — quick US map | `state`, `is_medicaid`, `total_rx`, `avg_mme` |
-| 4 | **Medicaid % per Zip** | Single metric per zip: *"What % of opioid Rx in this zip were Medicaid?"* Best for a one-layer choropleth | `zip_code`, `state`, `pct_medicaid` |
+| Q6 | **State × Year** | Panel data for DiD analysis, state trajectories | ~62 min |
+| Q7 | **Sales Channel** | Retail vs Mail Order by Medicaid status | ~58 min |
+| Q8 | **Monthly** | Seasonal patterns by Medicaid status | not run |
+| Q9 | **2018 Sample** | Stratified 2M-row sample for logistic regression | not run |
 
----
+### Module 3 — `queries/geographic.py`
 
-## 4. Analysis Plan — What These Data Will Show
-
-### 4A. National Trend (Time Series)
-
-With Query 1 & 2 we can plot:
-- **Total Medicaid opioid Rx vs Non-Medicaid opioid Rx** over 21 years.
-- **Medicaid's share** of all opioid prescriptions over time.
-- Whether the opioid epidemic "peaked" differently for Medicaid patients (e.g. did prescribing drop faster/slower after CDC guidelines in 2016?).
-
-### 4B. Potency / Drug Type Comparison
-
-With Query 4 we can answer:
-- Are Medicaid patients prescribed **higher-MME (more potent)** opioids on average?
-- Do Medicaid patients receive more **generic** opioids vs brand-name?
-- Are certain high-risk drugs (e.g. fentanyl, oxycodone) disproportionately prescribed to one group?
-
-### 4C. Prescriber Behavior
-
-With Query 5 we can see:
-- Do **pain management specialists** write a larger share of Medicaid opioid Rx?
-- Are **primary care / family medicine** doctors the main prescribers for both groups, or does the specialty mix differ?
-- Could certain specialty patterns suggest "pill mill" dynamics in one insurance category?
-
-### 4D. Geographic Disparities (The Map Story)
-
-With the geographic queries + a US zip-code shapefile:
-- Build a **choropleth map** of Medicaid opioid Rx rates across the country.
-- Overlay or side-by-side compare with Non-Medicaid rates.
-- Identify **hot-spot zip codes** where Medicaid opioid prescribing is disproportionately high.
-- Cross-reference with known opioid-crisis regions (Appalachia, rural South, etc.).
-
-### 4E. State Policy Impact
-
-With Query 3 (by state):
-- Compare states that expanded Medicaid (ACA expansion) vs those that didn't.
-- Look for changes in Medicaid opioid Rx around **2014** (ACA Medicaid expansion year).
-- Identify states where Medicaid opioid prescribing is highest per capita.
-
----
-
-## 5. GIS / Mapping Plan
-
-The leading question specifically calls for geographic visualization using zip-code shapefiles.
-
-### Data Flow
-
-```
-┌─────────────────────────────┐
-│  geo_zip_medicaid_pct.csv   │  ← Query 4 output (pct_medicaid per zip)
-│  zip_code | state | pct_med │
-└──────────────┬──────────────┘
-               │  JOIN on zip_code
-               ▼
-┌─────────────────────────────┐
-│  US Zip-Code Shapefile      │  ← Census ZCTA shapefile (free download)
-│  ZCTA5CE20 | geometry       │
-└──────────────┬──────────────┘
-               │
-               ▼
-┌─────────────────────────────┐
-│  Choropleth Map             │  ← Python (geopandas + matplotlib/folium)
-│  Color = % Medicaid opioid  │     or R (sf + ggplot2)
-└─────────────────────────────┘
-```
-
-### Shapefile Source
-- **US Census ZCTA (Zip Code Tabulation Areas):** https://www.census.gov/cgi-bin/geo/shapefiles/index.php → select "Zip Code Tabulation Areas"
-- These provide polygon geometries for every US zip code.
-
----
-
-## 6. Potential Supplementary Data (Enrichment)
-
-To strengthen the health-equity angle, the zip-code data can be joined with:
-
-| Source | What It Adds | Join Key |
+| # | Query | What It Answers |
 |---|---|---|
-| **US Census ACS** | Income, poverty rate, race/ethnicity, education, uninsured % by zip/ZCTA | zip / ZCTA |
-| **CDC WONDER** | Overdose death rates by county/state | state / FIPS |
-| **USDA Rural-Urban Codes** | Rural vs urban classification | FIPS / zip |
-| **CMS Medicaid Enrollment** | Actual Medicaid enrollee counts by state/year | state + year |
+| 1 | **Zip Code** | Per-zip Medicaid vs Non-Medicaid totals |
+| 2 | **Zip × Year** | Zip-level time series |
+| 3 | **State Level** | Lighter-weight state summary |
+| 4 | **Medicaid % per Zip** | Single metric per zip for choropleth maps |
 
-This would let you normalise: *"Medicaid opioid Rx per 1,000 Medicaid enrollees"* instead of raw counts — a much fairer comparison.
+### Module 4 — `queries/pill_mill.py`
 
----
-
-## 7. Run Order & Time Estimates
-
-| Step | Command | Expected Time | Output |
-|---|---|---|---|
-| ✅ Done | `python main.py explore` | ~10 sec | `output/payor_plan_summary.csv`, `medicaid_plan_ids.csv` |
-| **Next** | `python main.py medicaid` | 10–30 min (5 heavy JOINs on 2.1B rows) | 5 CSVs in `output/` |
-| Then | `python main.py geo-light` | 10–20 min | State-level + zip % CSVs |
-| Optional | `python main.py geo` | 30–60+ min | Full zip × year breakdown |
-
-> **Recommendation:** Run `python main.py medicaid` first. Those 5 CSVs give you enough to build all the charts and statistical tests for the research question. Run the geographic queries after, since they're mainly for the map visualisation.
+5-layer prescriber concentration analysis to identify potential "pill mill" prescribers.
 
 ---
 
-## 8. Statistical Tests to Apply (Post-Query)
+## 4. Analysis Modules
 
-Once CSVs are in hand, use Python/R to run:
+Located in `analysis/`:
+
+| Script | Purpose | Input |
+|---|---|---|
+| `deep_analysis.py` | 10-section cross-analysis of Q1–Q5 + CDC | iqvia_core/ + cdc/ CSVs |
+| `extended_analysis.py` | 6-section analysis of Q6 + Q7 (ACA DiD, trajectories, channels) | extended/ CSVs |
+| `bridge_analysis.py` | 7-section integration of Q6/Q7 with Q1–Q5 + CDC | All CSVs |
+| `what_happened_2012.py` | Forensic investigation of the 2012 inflection point | iqvia_core/ + extended/ + cdc/ |
+| `check_2018.py` | Proves 2018 data is truncated (~3.6 months) | extended/ + iqvia_core/ |
+| `analyze.py` | Generic CSV analyzer (auto-detect stat tests, plotting) | Any CSV |
+
+---
+
+## 5. External Data Sources
+
+| Source | Purpose | Location |
+|---|---|---|
+| **CDC WONDER** | Overdose death rates by state × year (1999–2018) | `Datasets/Multiple Cause of Death, 1999-2020.csv` |
+| **Census ACS B01003** | Total population by county | `Datasets/ACSDT5Y2018.B01003*/` |
+| **Census ACS B02001** | Race/ethnicity by county | `Datasets/ACSDT5Y2018.B02001*/` |
+| **Census ACS B19013** | Median household income by county | `Datasets/ACSDT5Y2018.B19013*/` |
+| **Census ACS S1701** | Poverty status by county | `Datasets/ACSST5Y2018.S1701*/` |
+| **Census ACS S2704** | Insurance coverage by county | `Datasets/ACSST5Y2018.S2704*/` |
+
+---
+
+## 6. Output Organization
+
+```
+output/
+├── lookups/        → payor_plan_full.csv, payor_plan_summary.csv, medicaid_plan_ids.csv
+├── iqvia_core/     → Q1–Q5 results (medicaid_vs_nonmedicaid_by_*.csv, medicaid_pct_by_year.csv)
+├── extended/       → Q6–Q7 results (by_state_year.csv, by_sales_channel.csv)
+├── cdc/            → CDC data + merged IQVIA-CDC files
+└── pillmill/       → Prescriber concentration output
+```
+
+---
+
+## 7. Query Optimization Strategy
+
+Because the `main` table has 2.1B rows:
+
+1. **No full table scans** — every query uses `WHERE pg IN (...)` + `GROUP BY`
+2. **Literal IN tuples** — pre-fetched 71 Medicaid IDs and 3,959 opioid PGs, embedded as literal SQL
+3. **Year-by-year execution** — queries loop 1997–2018, aggregating one year at a time
+4. **Python-side enrichment** — drug metadata (MME, ingredient) mapped from cached lookups, not JOINs
+5. **Single persistent connection** — connection pooling via `utils/db_utils.py`
+
+---
+
+## 8. Statistical Tests Applied
 
 | Test | Purpose |
 |---|---|
-| **Two-sample t-test / Mann-Whitney U** | Is the average MME significantly different between Medicaid and Non-Medicaid? |
-| **Chi-squared test** | Are certain drugs prescribed at significantly different rates between groups? |
-| **Linear regression** | Does Medicaid status predict higher Rx volume after controlling for state/year? |
-| **Difference-in-differences** | Did the Medicaid opioid gap change after specific policy interventions (2010 CDC, 2016 guidelines)? |
-| **Spatial autocorrelation (Moran's I)** | Are high-Medicaid-opioid zip codes clustered geographically? |
+| Welch's t-test / Mann-Whitney U | Mean MME differences between groups |
+| Paired t-test | Year-over-year paired comparisons |
+| Cohen's d | Effect size measurement |
+| Pearson r / Spearman ρ | Correlation (Rx trends vs overdose trends) |
+| Linear regression | Time trend analysis |
+| Difference-in-Differences | ACA expansion natural experiment |
+| HHI | Drug market concentration |
+| Gini coefficient | Prescribing inequality across specialties |
 
 ---
 
@@ -200,18 +164,31 @@ Once CSVs are in hand, use Python/R to run:
 
 ```
 lucyInstituteChallenge/
-├── main.py                          ← Run everything or pick a module
-├── db_connect.py                    ← Connection config (already existed)
-├── utils/
-│   └── db_utils.py                  ← get_connection(), run_query(), export_to_csv()
-├── queries/
-│   ├── explore_payors.py            ← Step 1: discover Medicaid plan IDs
-│   ├── medicaid_vs_general.py       ← Step 2: 5 comparison queries
-│   └── geographic.py                ← Step 3: 4 zip/state-level queries
-├── output/                          ← All CSVs land here
-│   ├── payor_plan_summary.csv       ✅
-│   ├── medicaid_plan_ids.csv        ✅
-│   └── payor_plan_full.csv          ✅
+├── main.py                          ← CLI orchestrator
+├── queries/                         ← DB query modules
+│   ├── explore_payors.py
+│   ├── medicaid_vs_general.py       ← Q1–Q5
+│   ├── geographic.py
+│   ├── extended.py                  ← Q6–Q9
+│   └── pill_mill.py
+├── analysis/                        ← Post-query analysis
+│   ├── deep_analysis.py
+│   ├── extended_analysis.py
+│   ├── bridge_analysis.py
+│   ├── what_happened_2012.py
+│   ├── check_2018.py
+│   └── analyze.py
+├── visualizations/                  ← Charts & figures
+│   └── prescriptionsVsOverdose.py
+├── utils/                           ← DB connection & helpers
+│   ├── db_connect.py
+│   └── db_utils.py
+├── cdc/                             ← CDC WONDER loading/merging
+├── census/                          ← Census ACS loading/merging
+├── output/                          ← Generated CSVs
+├── Datasets/                        ← Raw data (not in git)
+├── instructions/                    ← Challenge docs
+├── FINDINGS.md                      ← Research findings
 ├── DATA_STRATEGY.md                 ← This file
-└── leadingQuestion.md               ← Original research question
+└── requirements.txt
 ```
