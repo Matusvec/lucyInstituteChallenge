@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# Note: Ensure pandas and matplotlib are installed: pip install pandas matplotlib
 df = pd.read_csv('medicaid_vs_nonmedicaid_by_year.csv', usecols=['year', 'is_medicaid','total_rx','new_rx','total_qty'])
 subset = df.iloc[11:32]
 df_pivoted = subset.pivot(index='year', columns='is_medicaid', values=['new_rx', 'total_rx'])
