@@ -11,4 +11,13 @@
     - Methadone clinics (open for business)
     - Rehab industry revenue
     - Illicit opioid arrests
-    - Deaths from 
+    - Deaths from illicit
+
+## Is the prescription / overdose phenomenon
+    - income by zip code
+    - medicaid proportion by zip code
+
+## Locations:
+    - Big Cities
+    - Indiana (county)
+    - North Carolina/Tennessee ()
