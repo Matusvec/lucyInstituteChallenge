@@ -27,6 +27,8 @@ Usage
     python main.py census           # load & combine Census ACS tables
     python main.py merge            # merge IQVIA zip output + Census demographics
     python main.py cdc              # merge IQVIA state data + CDC WONDER overdose data
+    python main.py cdc-drug         # build CDC drug-type panel + merge with IQVIA state×year
+    python main.py map-illicit      # build animated map of illicit-overdose spread
 """
 
 import sys
@@ -42,6 +44,8 @@ from census import load_census
 from census import merge_iqvia_census
 from cdc import load_wonder
 from cdc import merge_iqvia_cdc
+from cdc import load_wonder_drug_types
+from cdc import merge_iqvia_cdc_drugtype
 from utils.db_utils import get_connection, export_to_csv
 
 
@@ -220,6 +224,33 @@ def run_cdc():
         merge_iqvia_cdc.analyze_merged(df)
 
 
+def run_cdc_drug():
+    """Step 8 – Build CDC drug-type outputs and merge with IQVIA state×year panel."""
+    print("\n" + "=" * 60)
+    print("STEP 8: CDC DRUG-TYPE PANEL + IQVIA STATE×YEAR MERGE")
+    print("=" * 60)
+
+    cdc_types = load_wonder_drug_types.load_overdose_deaths_by_drug_type()
+    export_to_csv(cdc_types, "cdc_overdose_by_state_year_drug_type.csv", subdir="cdc")
+
+    illicit_panel = load_wonder_drug_types.build_illicit_spread_panel(cdc_types, start_year=1999, end_year=2018)
+    export_to_csv(illicit_panel, "cdc_illicit_overdose_by_state_year.csv", subdir="cdc")
+
+    merged = merge_iqvia_cdc_drugtype.merge_iqvia_cdc_drugtype()
+    export_to_csv(merged, "iqvia_cdc_state_year_illicit_panel.csv", subdir="cdc")
+
+
+def run_map_illicit():
+    """Step 9 – Build animated US map of illicit-overdose spread by year."""
+    print("\n" + "=" * 60)
+    print("STEP 9: ILLICIT OVERDOSE SPREAD MAP")
+    print("=" * 60)
+    from visualizations.illicit_overdose_spread import build_map
+
+    out = build_map()
+    print(f"  ✅ Map saved to: {out}")
+
+
 def run_merge():
     """Step 5 – Merge IQVIA zip data with Census demographics."""
     print("\n" + "=" * 60)
@@ -281,6 +312,10 @@ def main():
         run_merge()
     elif mode == "cdc":
         run_cdc()
+    elif mode == "cdc-drug":
+        run_cdc_drug()
+    elif mode == "map-illicit":
+        run_map_illicit()
     elif mode == "all":
         run_explore()
         run_medicaid()
@@ -289,7 +324,7 @@ def main():
         run_merge()
     else:
         print(f"Unknown mode '{mode}'. Use: explore | medicaid | q3 | q4 | q5 | q3q4q5 | q4q5 | "
-              f"extended | q6 | q7 | q8 | q9 | q6q7q8 | pillmill | geo | geo-light | census | merge | cdc | all")
+              f"extended | q6 | q7 | q8 | q9 | q6q7q8 | pillmill | geo | geo-light | census | merge | cdc | cdc-drug | map-illicit | all")
         sys.exit(1)
 
     elapsed = time.time() - start

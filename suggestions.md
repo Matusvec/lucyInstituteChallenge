@@ -21,3 +21,23 @@
     - Big Cities
     - Indiana (county)
     - North Carolina/Tennessee ()
+
+## Next Thing To Do (Executable)
+
+1. Get CDC WONDER by drug type (State × Year × Drug/Alcohol Induced Cause)
+    - Save as: `Datasets/Multiple Cause of Death, Drug Type, 1999-2020.csv`
+    - This enables heroin/fentanyl/cocaine/psychostimulant tracking over time.
+
+2. Build CDC drug-type outputs + merge with IQVIA state-year panel
+    - Run: `python main.py q6`
+    - Run: `python main.py cdc-drug`
+    - Output panel: `output/cdc/iqvia_cdc_state_year_illicit_panel.csv`
+
+3. Build time-based US geo spread map for illicit overdose deaths
+    - Run: `python main.py map-illicit`
+    - Output map: `output/cdc/illicit_overdose_spread_map.html`
+
+4. Use this panel to test your core hypothesis
+    - Compare trend breaks after ~2012 by state.
+    - Check whether illicit-overdose rates rise while Rx volume declines.
+    - Identify first spike states and possible diffusion pattern to nearby states/regions.

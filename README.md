@@ -124,6 +124,9 @@ python main.py pillmill        # Prescriber concentration analysis
 python main.py cdc             # Merge IQVIA + CDC overdose data
 python main.py census          # Load Census ACS tables
 python main.py merge           # Merge IQVIA zip + Census demographics
+python main.py cdc             # Merge IQVIA state + CDC all-overdose data
+python main.py cdc-drug        # Build CDC drug-type panel + merge IQVIA state×year
+python main.py map-illicit     # Build animated US map of illicit overdose spread
 ```
 
 ## Running Analysis
