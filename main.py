@@ -32,6 +32,7 @@ Usage
     python main.py map-illicit      # build animated map of illicit-overdose spread
     python main.py map-county       # build animated county-level overdose spread map
     python main.py map-fentanyl     # build animated fentanyl spread map by county
+    python main.py map-dashboard    # comprehensive county map (IQVIA + CDC merged)
 """
 
 import sys
@@ -285,6 +286,17 @@ def run_map_fentanyl():
     print(f"  ✅ Map saved to: {out}")
 
 
+def run_map_dashboard():
+    """Build comprehensive county dashboard map (IQVIA + CDC merged)."""
+    print("\n" + "=" * 60)
+    print("COUNTY DASHBOARD MAP (IQVIA + CDC MERGED)")
+    print("=" * 60)
+    from visualizations.county_dashboard_map import build_dashboard_map
+
+    out = build_dashboard_map()
+    print(f"  ✅ Map saved to: {out}")
+
+
 def run_merge():
     """Step 5 – Merge IQVIA zip data with Census demographics."""
     print("\n" + "=" * 60)
@@ -356,6 +368,8 @@ def main():
         run_map_county()
     elif mode == "map-fentanyl":
         run_map_fentanyl()
+    elif mode == "map-dashboard":
+        run_map_dashboard()
     elif mode == "all":
         run_explore()
         run_medicaid()
@@ -365,7 +379,7 @@ def main():
     else:
         print(f"Unknown mode '{mode}'. Use: explore | medicaid | q3 | q4 | q5 | q3q4q5 | q4q5 | "
               f"extended | q6 | q7 | q8 | q9 | q6q7q8 | pillmill | geo | geo-light | "
-              f"county | census | merge | cdc | cdc-drug | map-illicit | map-county | map-fentanyl | all")
+              f"county | census | merge | cdc | cdc-drug | map-illicit | map-county | map-fentanyl | map-dashboard | all")
         sys.exit(1)
 
     elapsed = time.time() - start
