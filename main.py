@@ -22,6 +22,7 @@ Usage
     python main.py q8               # only Q8 (monthly seasonality)
     python main.py q9               # only Q9 (stratified 2018 sample)
     python main.py pillmill          # prescriber concentration / pill mill analysis
+    python main.py county           # county-level panel (zip→county), 2008-2017
     python main.py geo              # only geographic / zip-code queries
     python main.py geo-light        # only state-level + zip % (faster)
     python main.py census           # load & combine Census ACS tables
@@ -29,6 +30,7 @@ Usage
     python main.py cdc              # merge IQVIA state data + CDC WONDER overdose data
     python main.py cdc-drug         # build CDC drug-type panel + merge with IQVIA state×year
     python main.py map-illicit      # build animated map of illicit-overdose spread
+    python main.py map-county       # build animated county-level overdose spread map
 """
 
 import sys
@@ -40,6 +42,7 @@ from queries import medicaid_vs_general
 from queries import geographic
 from queries import extended
 from queries import pill_mill
+from queries import county_panel
 from census import load_census
 from census import merge_iqvia_census
 from cdc import load_wonder
@@ -240,6 +243,14 @@ def run_cdc_drug():
     export_to_csv(merged, "iqvia_cdc_state_year_illicit_panel.csv", subdir="cdc")
 
 
+def run_county():
+    """County-level panel: zip→county aggregation with full Medicaid/MME detail."""
+    print("\n" + "=" * 60)
+    print("COUNTY PANEL: ZIP→COUNTY OPIOID DATA (2008–2017)")
+    print("=" * 60)
+    county_panel.run_all(save=True)
+
+
 def run_map_illicit():
     """Step 9 – Build animated US map of illicit-overdose spread by year."""
     print("\n" + "=" * 60)
@@ -248,6 +259,17 @@ def run_map_illicit():
     from visualizations.illicit_overdose_spread import build_map
 
     out = build_map()
+    print(f"  ✅ Map saved to: {out}")
+
+
+def run_map_county():
+    """Build animated county-level overdose spread map (2008-2017)."""
+    print("\n" + "=" * 60)
+    print("COUNTY OVERDOSE SPREAD MAP (2008-2017)")
+    print("=" * 60)
+    from visualizations.county_overdose_spread import build_county_map
+
+    out = build_county_map()
     print(f"  ✅ Map saved to: {out}")
 
 
@@ -314,8 +336,12 @@ def main():
         run_cdc()
     elif mode == "cdc-drug":
         run_cdc_drug()
+    elif mode == "county":
+        run_county()
     elif mode == "map-illicit":
         run_map_illicit()
+    elif mode == "map-county":
+        run_map_county()
     elif mode == "all":
         run_explore()
         run_medicaid()
@@ -324,7 +350,8 @@ def main():
         run_merge()
     else:
         print(f"Unknown mode '{mode}'. Use: explore | medicaid | q3 | q4 | q5 | q3q4q5 | q4q5 | "
-              f"extended | q6 | q7 | q8 | q9 | q6q7q8 | pillmill | geo | geo-light | census | merge | cdc | cdc-drug | map-illicit | all")
+              f"extended | q6 | q7 | q8 | q9 | q6q7q8 | pillmill | geo | geo-light | "
+              f"county | census | merge | cdc | cdc-drug | map-illicit | map-county | all")
         sys.exit(1)
 
     elapsed = time.time() - start

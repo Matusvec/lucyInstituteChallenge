@@ -41,3 +41,16 @@
     - Compare trend breaks after ~2012 by state.
     - Check whether illicit-overdose rates rise while Rx volume declines.
     - Identify first spike states and possible diffusion pattern to nearby states/regions.
+
+# KEY NEW THINGS TO DO
+- From 2008-2017: every county in the US:
+  - total prescriptions, new prescriptions, average MME
+  - number of prescriptions on medicaid vs non medicaid
+  - overdose deaths
+  
+
+
+# CDC PREDICTION DATA TO PULL
+- Want to do time series analysis on drug overdose death rate by county 
+- want group by county (residence first), and then occurence for time series analysis
+- 
