@@ -31,6 +31,7 @@ Usage
     python main.py cdc-drug         # build CDC drug-type panel + merge with IQVIA state×year
     python main.py map-illicit      # build animated map of illicit-overdose spread
     python main.py map-county       # build animated county-level overdose spread map
+    python main.py map-fentanyl     # build animated fentanyl spread map by county
 """
 
 import sys
@@ -273,6 +274,17 @@ def run_map_county():
     print(f"  ✅ Map saved to: {out}")
 
 
+def run_map_fentanyl():
+    """Build animated county-level fentanyl spread map (2008-2017)."""
+    print("\n" + "=" * 60)
+    print("FENTANYL SPREAD MAP (2008-2017)")
+    print("=" * 60)
+    from visualizations.fentanyl_spread import build_fentanyl_map
+
+    out = build_fentanyl_map()
+    print(f"  ✅ Map saved to: {out}")
+
+
 def run_merge():
     """Step 5 – Merge IQVIA zip data with Census demographics."""
     print("\n" + "=" * 60)
@@ -342,6 +354,8 @@ def main():
         run_map_illicit()
     elif mode == "map-county":
         run_map_county()
+    elif mode == "map-fentanyl":
+        run_map_fentanyl()
     elif mode == "all":
         run_explore()
         run_medicaid()
@@ -351,7 +365,7 @@ def main():
     else:
         print(f"Unknown mode '{mode}'. Use: explore | medicaid | q3 | q4 | q5 | q3q4q5 | q4q5 | "
               f"extended | q6 | q7 | q8 | q9 | q6q7q8 | pillmill | geo | geo-light | "
-              f"county | census | merge | cdc | cdc-drug | map-illicit | map-county | all")
+              f"county | census | merge | cdc | cdc-drug | map-illicit | map-county | map-fentanyl | all")
         sys.exit(1)
 
     elapsed = time.time() - start

@@ -17,7 +17,11 @@ from utils.db_utils import export_to_csv
 
 # ── Path to the downloaded CDC WONDER CSV ──────────────────────────────────
 DATASETS = os.path.join(os.path.dirname(os.path.dirname(__file__)), "Datasets")
-WONDER_CSV = os.path.join(DATASETS, "Multiple Cause of Death, 1999-2020.csv")
+_CANDIDATES = [
+    os.path.join(DATASETS, "cdc", "overdose_by_state_year_1999-2020.csv"),
+    os.path.join(DATASETS, "Multiple Cause of Death, 1999-2020.csv"),
+]
+WONDER_CSV = next((p for p in _CANDIDATES if os.path.exists(p)), _CANDIDATES[0])
 
 
 def load_overdose_deaths() -> pd.DataFrame:

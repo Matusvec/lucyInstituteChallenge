@@ -32,7 +32,8 @@ GEOJSON_URL = (
     "https://raw.githubusercontent.com/plotly/datasets/master/"
     "geojson-counties-fips.json"
 )
-GEOJSON_LOCAL = os.path.join(BASE, "Datasets", "us_counties_geojson.json")
+GEOJSON_LOCAL = os.path.join(BASE, "Datasets", "geo", "us_counties_geojson.json")
+_GEOJSON_FALLBACK = os.path.join(BASE, "Datasets", "us_counties_geojson.json")
 
 # Dark-to-hot color scale: low rates blend into the dark background,
 # high rates glow bright orange/yellow.
@@ -53,10 +54,11 @@ BG_COLOR = "rgb(15, 15, 35)"
 
 def _load_geojson() -> dict:
     """Download the simplified US county GeoJSON (or load from cache)."""
-    if os.path.exists(GEOJSON_LOCAL):
-        print(f"  Loading cached county GeoJSON: {GEOJSON_LOCAL}")
-        with open(GEOJSON_LOCAL, encoding="utf-8") as f:
-            return json.load(f)
+    for path in [GEOJSON_LOCAL, _GEOJSON_FALLBACK]:
+        if os.path.exists(path):
+            print(f"  Loading cached county GeoJSON: {path}")
+            with open(path, encoding="utf-8") as f:
+                return json.load(f)
 
     print("  Downloading US county GeoJSON from GitHub ...")
     from urllib.request import urlopen

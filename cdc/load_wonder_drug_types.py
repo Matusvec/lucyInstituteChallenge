@@ -22,7 +22,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from utils.db_utils import export_to_csv
 
 DATASETS = os.path.join(os.path.dirname(os.path.dirname(__file__)), "Datasets")
-WONDER_DRUGTYPE_CSV = os.path.join(DATASETS, "Multiple Cause of Death, Drug Type, 1999-2020.csv")
+_DRUGTYPE_CANDIDATES = [
+    os.path.join(DATASETS, "cdc", "overdose_by_state_drugtype_1999-2020.csv"),
+    os.path.join(DATASETS, "Multiple Cause of Death, Drug Type, 1999-2020.csv"),
+]
+WONDER_DRUGTYPE_CSV = next(
+    (p for p in _DRUGTYPE_CANDIDATES if os.path.exists(p)), _DRUGTYPE_CANDIDATES[0]
+)
 
 
 def _first_present(df: pd.DataFrame, candidates: list[str]) -> str:

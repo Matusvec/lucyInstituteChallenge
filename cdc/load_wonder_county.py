@@ -20,6 +20,7 @@ from utils.db_utils import export_to_csv
 BASE = os.path.dirname(os.path.dirname(__file__))
 
 _CANDIDATES = [
+    os.path.join(BASE, "Datasets", "cdc", "overdose_by_county_year_2008-2017.csv"),
     os.path.join(BASE, "Datasets", "Multiple Cause of Death, County, 2008-2017.csv"),
     os.path.join(BASE, "output", "cdc", "Multiple Cause of Death, 1999-2020 (9).csv"),
 ]
