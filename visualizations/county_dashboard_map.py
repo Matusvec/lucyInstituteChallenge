@@ -205,7 +205,6 @@ def build_dashboard_map() -> str:
                 colorbar=dict(
                     title=mcfg["short"],
                     tickfont=dict(color="white"),
-                    titlefont=dict(color="white"),
                     len=0.6,
                 ),
             )],
