@@ -3,15 +3,31 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
 
-final_df = pd.read_csv("C:\\Users\\tmnfn\\OneDrive\\Desktop\\python shit\\hdac\\AvgMME_v_ODD.csv")
+# Load your datasets
+df1 = pd.read_csv("C:/Users/M16Mc/Documents/2026/lucyInstituteChallenge/output/county/iqvia_county_year_panel.csv")
+df2 = pd.read_csv("C:/Users/M16Mc/Documents/2026/lucyInstituteChallenge/Datasets/cdc/overdose_by_county_year_2008-2017.csv")
+
+# Check column names before renaming to avoid errors
+print("df1 columns:", df1.columns.tolist())
+print("df2 columns:", df2.columns.tolist())
+
+# Rename to standardize
+df1.rename(columns={'county_fips': 'county_code', 'avg_mme_per_unit': 'Average MME'}, inplace=True)
+df2.rename(columns={'County Code': 'county_code', 'Year':'year'}, inplace=True)
+
+# Keep county_code AND year in both subsets
+iqcy_subset = df1[['county_code', 'year', 'Average MME']]
+odcy_subset = df2[['county_code', 'year', 'Deaths']]
+
+# Merge on both county AND year
+final_df = pd.merge(iqcy_subset, odcy_subset, on=['county_code', 'year'], how='inner')
+
 
 final_df['Average MME'] = pd.to_numeric(final_df['Average MME'], errors='coerce')
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
-
-final_df = pd.read_csv("C:\\Users\\tmnfn\\OneDrive\\Desktop\\python shit\\hdac\\AvgMME_v_ODD.csv")
 
 # Force numeric and drop suppressed/missing deaths before aggregating
 final_df['Average MME'] = pd.to_numeric(final_df['Average MME'], errors='coerce')
@@ -60,5 +76,5 @@ plt.ylabel('Total Overdose Deaths per County (summed across years)', fontsize=12
 plt.legend(title='County')
 
 plt.tight_layout()
-plt.savefig("C:\\Users\\tmnfn\\OneDrive\\Desktop\\python shit\\hdac\\visualizations\\mme_vs_deaths_by_county.png", dpi=300)
+plt.savefig("Average_MME_vs_Total_Deaths_by_County.png", dpi=300)
 plt.show()

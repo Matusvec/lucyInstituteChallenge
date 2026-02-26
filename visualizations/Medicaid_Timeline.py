@@ -107,6 +107,12 @@ print(f"Years delta < 0:     {(timeline_df['delta'] < 0).sum()} / {len(timeline_
 
 # ── 4. Statistical Tests ──────────────────────────────────────────────────────
 
+DARK_BLUE = "#0C2340"   # Dark Blue
+MID_BLUE  = "#3B5E8C"   # midpoint between #0C2340 and #E1E8F2
+GOLD_BROWN = "#BFA15D"   # Golden Brown
+TEAL     = "#4EAE81"   # Teal
+DARK_TEAL = "#1B3B2C"   # Dark Teal
+
 # ── Test 1: One-sample t-test on 10 annual deltas ────────────────────────────
 
 t_stat, p_two = stats.ttest_1samp(timeline_df['delta'], popmean=0)
@@ -169,6 +175,31 @@ print("=" * 55)
 print(f"  Statistic:  {wilcox.statistic:.4f}")
 print(f"  p-value:    {wilcox.pvalue:.4f}")
 
+# ── 5. Compute county-level weighted CI for bottom panel ─────────────────────
+# For each year: population-weighted mean and SE of county_delta,
+# then 95% CI = mean ± 1.96 * SE
+
+def weighted_mean_se(group):
+    w   = group['population']
+    d   = group['county_delta']
+    w   = w / w.sum()                          # normalise weights
+    mu  = (w * d).sum()                        # weighted mean
+    var = (w * (d - mu) ** 2).sum()            # weighted variance
+    n   = group['population'].count()
+    se  = np.sqrt(var / n)                     # weighted SE
+    return pd.Series({'delta_mean': mu, 'delta_se': se})
+
+ci_df = (
+    panel.groupby('year')
+    .apply(weighted_mean_se)
+    .reset_index()
+)
+ci_df['ci95'] = 1.96 * ci_df['delta_se']
+
+# Merge CIs into timeline_df for plotting
+timeline_df = timeline_df.merge(ci_df[['year', 'delta_mean', 'ci95']], on='year', how='left')
+
+
 # ── 5. Timeline Plot ──────────────────────────────────────────────────────────
 
 fig, axes = plt.subplots(2, 1, figsize=(11, 9), sharex=True,
@@ -201,15 +232,32 @@ ax1.spines['left'].set_color('white')
 ax1.spines['right'].set_color('white')
 ax1.grid(axis='y', linestyle='--', alpha=0.3, color='white')
 
+ax1.set_ylim(bottom=0)
+
 ax2 = axes[1]
 ax2.set_facecolor(DARK_BLUE)
 bar_colors = [GOLD_BROWN if d >= 0 else TEAL for d in timeline_df['delta']]
 ax2.bar(timeline_df['year'], timeline_df['delta'] * 100,
         color=bar_colors, edgecolor='white', linewidth=0.6)
+
+ax2.errorbar(
+    timeline_df['year'],
+    timeline_df['delta'] * 100,
+    yerr=timeline_df['ci95'] * 100,
+    fmt='none',
+    color=GOLD_BROWN,
+    capsize=5,
+    capthick=1.8,
+    elinewidth=1.8,
+    zorder=5,
+)
+
 ax2.axhline(0, color='white', linewidth=1.0)
 ax2.set_ylabel('Delta (pp)', fontsize=11, color='white')
 ax2.set_xlabel('Year', fontsize=12, color='white')
-ax2.set_title('Annual Delta: Rx Share − Enrollment Share\n(Teal = Medicaid received less than population share)',
+ax2.set_title('Annual Delta: Rx Share \u2212 Enrollment Share\n'
+              '(Teal = Medicaid received less than population share) '
+              '\u00b1 95% CI (county-level, pop-weighted)',
               fontsize=11, color='white')
 ax2.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.1f%%'))
 ax2.set_xticks(timeline_df['year'])
@@ -223,10 +271,3 @@ ax2.grid(axis='y', linestyle='--', alpha=0.3, color='white')
 plt.tight_layout()
 plt.savefig('medicaid_rx_vs_enrollment_timeline.png', dpi=150, bbox_inches='tight')
 plt.show()
-
-
-
-
-
-
-
