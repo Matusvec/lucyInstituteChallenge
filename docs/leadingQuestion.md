@@ -1,10 +1,22 @@
-Is there a significant difference between the way people on Medicaid are prescribed opioids versus the way the general population is prescribed opioids?
+# Research Question
 
-Compare the percentage of opioid perscriptions to those on Medicaid to the percentage of prescriptions to others versus the general population on medicaid vs not in America (not on medicaid)
-presciption on medicaid vs prescription not on medicaid
+> **What can Opioid Prescription Data tell us about Opioid Overdose Death?**
 
-Want to make geographic comparisons, need GIS cooradintes in a shape file for US zipcodes, I want to use the zipcodes to get coordinates to make a nice geographical map
+---
 
-Want to create a logistic regression of Medicaid Y/N to model which features are significant in predicting whether a prescription is being paid for with Medicaid.  SQL Draw suggestion: I would like from 2018 (last year of dataset) 2 million rows (stratified [meaning the proportion of the prescriptions paid for with medicaid is kept the same as the proportion seen in the 2018 total] random sample, about 2% of what is ~100 million rows) 
+## Presentation Context
 
+From our presentation *Statistics vs. Stigma: How Opioid Prescriptions Relate to Overdose Deaths* (2.27.2026):
 
+We combined **IQVIA** prescription data (2.1B records, 1997–2018) with **CDC WONDER** overdose mortality data (1999–2020) to explore correlations between prescribing patterns and overdose deaths across geography and time.
+
+**Causality disclaimer:** Our analysis establishes correlation only. There is no implication of causality.
+
+---
+
+## Original Exploratory Questions (archived)
+
+- Is there a significant difference between the way people on Medicaid are prescribed opioids versus the general population?
+- Compare prescription rates: Medicaid vs non-Medicaid, vs general population enrollment
+- Geographic comparisons using GIS coordinates and shape files for US zip codes
+- Logistic regression: Medicaid Y/N to model which features predict prescription payment source
