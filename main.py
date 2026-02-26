@@ -33,6 +33,7 @@ Usage
     python main.py map-county       # build animated county-level overdose spread map
     python main.py map-fentanyl     # build animated fentanyl spread map by county
     python main.py map-dashboard    # comprehensive county map (IQVIA + CDC merged)
+    python main.py map-mme         # MME spread map + 5-number summary
 """
 
 import sys
@@ -261,7 +262,7 @@ def run_map_illicit():
     from visualizations.illicit_overdose_spread import build_map
 
     out = build_map()
-    print(f"  ✅ Map saved to: {out}")
+    print(f"  Map saved to: {out}")
 
 
 def run_map_county():
@@ -272,7 +273,7 @@ def run_map_county():
     from visualizations.county_overdose_spread import build_county_map
 
     out = build_county_map()
-    print(f"  ✅ Map saved to: {out}")
+    print(f"  Map saved to: {out}")
 
 
 def run_map_fentanyl():
@@ -283,7 +284,7 @@ def run_map_fentanyl():
     from visualizations.fentanyl_spread import build_fentanyl_map
 
     out = build_fentanyl_map()
-    print(f"  ✅ Map saved to: {out}")
+    print(f"  Map saved to: {out}")
 
 
 def run_map_dashboard():
@@ -294,7 +295,18 @@ def run_map_dashboard():
     from visualizations.county_dashboard_map import build_dashboard_map
 
     out = build_dashboard_map()
-    print(f"  ✅ Map saved to: {out}")
+    print(f"  Map saved to: {out}")
+
+
+def run_map_mme():
+    """Build MME spread map with 5-number summary and range."""
+    print("\n" + "=" * 60)
+    print("MME SPREAD MAP (IQVIA)")
+    print("=" * 60)
+    from visualizations.mme_spread_map import build_mme_spread_map
+
+    out = build_mme_spread_map()
+    print(f"  Map saved to: {out}")
 
 
 def run_merge():
@@ -370,6 +382,8 @@ def main():
         run_map_fentanyl()
     elif mode == "map-dashboard":
         run_map_dashboard()
+    elif mode == "map-mme":
+        run_map_mme()
     elif mode == "all":
         run_explore()
         run_medicaid()
@@ -379,7 +393,7 @@ def main():
     else:
         print(f"Unknown mode '{mode}'. Use: explore | medicaid | q3 | q4 | q5 | q3q4q5 | q4q5 | "
               f"extended | q6 | q7 | q8 | q9 | q6q7q8 | pillmill | geo | geo-light | "
-              f"county | census | merge | cdc | cdc-drug | map-illicit | map-county | map-fentanyl | map-dashboard | all")
+              f"county | census | merge | cdc | cdc-drug | map-illicit | map-county | map-fentanyl | map-dashboard | map-mme | all")
         sys.exit(1)
 
     elapsed = time.time() - start

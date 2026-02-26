@@ -18,6 +18,8 @@ import plotly.express as px
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
+from visualizations.theme import SCALE_OVERDOSE
+
 BASE = os.path.dirname(os.path.dirname(__file__))
 IN_CSV = os.path.join(BASE, "output", "cdc", "cdc_illicit_overdose_by_state_year.csv")
 OUT_HTML = os.path.join(BASE, "output", "cdc", "illicit_overdose_spread_map.html")
@@ -43,12 +45,14 @@ def build_map() -> str:
     df = pd.read_csv(IN_CSV)
     df["year"] = pd.to_numeric(df["year"], errors="coerce").astype("Int64")
     df = df.dropna(subset=["year", "state_code", "illicit_overdose_rate_per_100k"]).copy()
+    df = df.sort_values("year").reset_index(drop=True)
 
     df["state_code"] = df["state_code"].astype(str).str.zfill(2)
     df["state_abbr"] = df["state_code"].map(STATE_FIPS_TO_ABBR)
     df = df[df["state_abbr"].notna()].copy()
     df["year_str"] = df["year"].astype(str)
 
+    year_order = [str(y) for y in sorted(df["year"].unique())]
     fig = px.choropleth(
         df,
         locations="state_abbr",
@@ -56,7 +60,7 @@ def build_map() -> str:
         color="illicit_overdose_rate_per_100k",
         animation_frame="year_str",
         scope="usa",
-        color_continuous_scale="Reds",
+        color_continuous_scale=SCALE_OVERDOSE,
         range_color=(0, float(df["illicit_overdose_rate_per_100k"].quantile(0.98))),
         hover_data={
             "state": True,
@@ -68,11 +72,25 @@ def build_map() -> str:
         },
         title="Illicit-Proxy Overdose Death Rate by State Over Time",
         labels={"illicit_overdose_rate_per_100k": "Deaths per 100K"},
+        category_orders={"year_str": year_order},
     )
 
     fig.update_layout(
+        paper_bgcolor="rgb(12, 35, 64)",
+        plot_bgcolor="rgb(12, 35, 64)",
+        font=dict(color="white", family="Arial, sans-serif"),
         margin=dict(l=5, r=5, t=60, b=5),
-        coloraxis_colorbar=dict(title="Deaths / 100K"),
+        coloraxis_colorbar=dict(
+            title="Deaths / 100K",
+            tickfont=dict(color="white"),
+        ),
+    )
+    fig.update_geos(
+        bgcolor="rgb(12, 35, 64)",
+        lakecolor="rgb(12, 35, 64)",
+        landcolor="rgb(20, 45, 70)",
+        subunitcolor="rgba(59, 94, 140, 0.25)",
+        countrycolor="rgba(59, 94, 140, 0.4)",
     )
 
     fig.write_html(OUT_HTML, include_plotlyjs="cdn")

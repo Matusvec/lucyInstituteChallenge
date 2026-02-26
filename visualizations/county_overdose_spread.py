@@ -24,6 +24,7 @@ import plotly.express as px
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from cdc.load_wonder_county import load_county_overdose_2008_2017
+from visualizations.theme import BG_COLOR, SCALE_OVERDOSE
 
 BASE = os.path.dirname(os.path.dirname(__file__))
 OUT_HTML = os.path.join(BASE, "output", "cdc", "county_overdose_spread_map.html")
@@ -35,21 +36,6 @@ GEOJSON_URL = (
 GEOJSON_LOCAL = os.path.join(BASE, "Datasets", "geo", "us_counties_geojson.json")
 _GEOJSON_FALLBACK = os.path.join(BASE, "Datasets", "us_counties_geojson.json")
 
-# Dark-to-hot color scale: low rates blend into the dark background,
-# high rates glow bright orange/yellow.
-HEAT_SCALE = [
-    [0.00, "rgb(15, 15, 35)"],
-    [0.04, "rgb(50, 10, 60)"],
-    [0.12, "rgb(100, 15, 55)"],
-    [0.25, "rgb(160, 25, 40)"],
-    [0.40, "rgb(200, 55, 25)"],
-    [0.55, "rgb(225, 95, 15)"],
-    [0.70, "rgb(245, 145, 10)"],
-    [0.85, "rgb(255, 200, 30)"],
-    [1.00, "rgb(255, 255, 110)"],
-]
-
-BG_COLOR = "rgb(15, 15, 35)"
 
 
 def _load_geojson() -> dict:
@@ -81,6 +67,7 @@ def build_county_map() -> str:
 
     # Only keep rows where we have a rate to display
     df = df[df["overdose_rate_per_100k"].notna()].copy()
+    df = df.sort_values("year").reset_index(drop=True)
     df["year_str"] = df["year"].astype(str)
 
     # Cap the color range at the 98th percentile to prevent outliers
@@ -98,7 +85,7 @@ def build_county_map() -> str:
         color="overdose_rate_per_100k",
         animation_frame="year_str",
         scope="usa",
-        color_continuous_scale=HEAT_SCALE,
+        color_continuous_scale=SCALE_OVERDOSE,
         range_color=(0, rate_cap),
         hover_name="county",
         hover_data={
@@ -116,17 +103,18 @@ def build_county_map() -> str:
             "state": "State",
             "county_fips": "FIPS",
         },
+        category_orders={"year_str": [str(y) for y in sorted(df["year"].unique())]},
     )
 
     # ── Dark theme styling ──
     fig.update_geos(
         bgcolor=BG_COLOR,
         lakecolor=BG_COLOR,
-        landcolor="rgb(25, 25, 45)",
+        landcolor="rgb(20, 45, 70)",
         showlakes=True,
         showland=True,
-        subunitcolor="rgba(100, 110, 140, 0.25)",
-        countrycolor="rgba(100, 110, 140, 0.4)",
+        subunitcolor="rgba(59, 94, 140, 0.25)",
+        countrycolor="rgba(59, 94, 140, 0.4)",
     )
 
     fig.update_layout(
@@ -167,8 +155,8 @@ def build_county_map() -> str:
     if fig.layout.sliders and len(fig.layout.sliders) > 0:
         fig.layout.sliders[0].update(
             font=dict(color="white"),
-            activebgcolor="rgb(200, 80, 30)",
-            bgcolor="rgb(40, 40, 60)",
+            activebgcolor="rgb(191, 161, 93)",
+            bgcolor="rgb(59, 94, 140)",
             bordercolor="rgba(0,0,0,0)",
             tickcolor="white",
         )

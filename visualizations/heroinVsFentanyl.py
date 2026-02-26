@@ -16,6 +16,7 @@ import numpy as np
 import os
 
 BASE = os.path.dirname(os.path.dirname(__file__))
+from visualizations.theme import DARK_BLUE, MID_BLUE, GOLD_BROWN, TEAL, DARK_TEAL
 
 # ── Load data ─────────────────────────────────────────────────────────────
 df = pd.read_csv(os.path.join(BASE, "output", "cdc", "heroin_vs_fentanyl_1999-2018.csv"))
@@ -23,16 +24,27 @@ df = pd.read_csv(os.path.join(BASE, "output", "cdc", "heroin_vs_fentanyl_1999-20
 x = np.arange(len(df))
 width = 0.38
 
-# ── Color palette (matches existing project charts) ──────────────────────
-CLR_HEROIN = "#C44E52"       # red
-CLR_FENTANYL = "#4C72B0"     # blue
-CLR_TOTAL = "#DD8452"        # orange
+# ── Color palette (theme) ─────────────────────────────────────────────────
+CLR_HEROIN = TEAL
+CLR_FENTANYL = MID_BLUE
+CLR_TOTAL = GOLD_BROWN
 
 # ── Two-panel figure ─────────────────────────────────────────────────────
 fig, (ax1, ax2) = plt.subplots(
     2, 1, figsize=(16, 13),
     gridspec_kw={"height_ratios": [1, 1]},
 )
+fig.patch.set_facecolor(DARK_BLUE)
+for ax in (ax1, ax2):
+    ax.set_facecolor(DARK_BLUE)
+    ax.tick_params(colors="white")
+    ax.xaxis.label.set_color("white")
+    ax.yaxis.label.set_color("white")
+    ax.title.set_color("white")
+    ax.spines["bottom"].set_color("white")
+    ax.spines["top"].set_color("white")
+    ax.spines["left"].set_color("white")
+    ax.spines["right"].set_color("white")
 
 # ═══ PANEL 1 — Side-by-side bar chart (raw counts) ═══════════════════════
 bars_h = ax1.bar(
@@ -47,13 +59,13 @@ bars_f = ax1.bar(
 # Crossover annotation
 cross_year = 2016
 cross_idx = list(df["year"]).index(cross_year)
-ax1.axvline(cross_idx, linestyle=":", color="gray", alpha=0.6)
+ax1.axvline(cross_idx, linestyle=":", color=GOLD_BROWN, alpha=0.6)
 ax1.annotate(
     "2016: Fentanyl surpasses Heroin",
     xy=(cross_idx, df.loc[df["year"] == cross_year, "synthetic_opioid_deaths"].values[0]),
     xytext=(cross_idx - 4, 28000),
-    fontsize=10, fontweight="bold", color="#333",
-    arrowprops=dict(arrowstyle="->", color="gray", lw=1.5),
+    fontsize=10, fontweight="bold", color=GOLD_BROWN,
+    arrowprops=dict(arrowstyle="->", color=GOLD_BROWN, lw=1.5),
 )
 
 ax1.set_xticks(x)
@@ -64,8 +76,8 @@ ax1.set_title(
     "Heroin vs Synthetic Opioid (Fentanyl) Overdose Deaths — United States, 1999-2018",
     fontsize=14, fontweight="bold",
 )
-ax1.legend(loc="upper left", fontsize=11)
-ax1.grid(axis="y", alpha=0.3)
+ax1.grid(axis="y", alpha=0.2, color="white")
+ax1.legend(loc="upper left", fontsize=11, facecolor=DARK_BLUE, edgecolor="white", labelcolor="white")
 
 # ═══ PANEL 2 — Indexed to 2012 = 100 + area fill ═════════════════════════
 base_h = df.loc[df["year"] == 2012, "heroin_deaths"].values[0]
@@ -89,10 +101,10 @@ ax2.plot(
     markersize=6, label="Synthetic Opioids / Fentanyl (T40.4)",
 )
 
-ax2.axhline(100, color="gray", linestyle="--", alpha=0.5)
+ax2.axhline(100, color=GOLD_BROWN, linestyle="--", alpha=0.5)
 baseline_idx = list(df["year"]).index(2012)
-ax2.axvline(baseline_idx, linestyle=":", color="gray", alpha=0.6)
-ax2.annotate("2012 baseline", xy=(baseline_idx, 105), fontsize=9, color="gray", ha="center")
+ax2.axvline(baseline_idx, linestyle=":", color=GOLD_BROWN, alpha=0.6)
+ax2.annotate("2012 baseline", xy=(baseline_idx, 105), fontsize=9, color=GOLD_BROWN, ha="center")
 
 # Fentanyl peak annotation
 peak_yr = df.loc[df["fentanyl_index"].idxmax(), "year"]
@@ -113,8 +125,8 @@ ax2.set_title(
     "Relative Growth: Heroin vs Fentanyl Deaths (2012 = 100)",
     fontsize=14, fontweight="bold",
 )
-ax2.legend(loc="upper left", fontsize=11)
-ax2.grid(axis="y", alpha=0.3)
+ax2.legend(loc="upper left", fontsize=11, facecolor=DARK_BLUE, edgecolor="white", labelcolor="white")
+ax2.grid(axis="y", alpha=0.2, color="white")
 
 plt.tight_layout()
 plt.show()

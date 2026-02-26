@@ -11,13 +11,15 @@ Animated by year (2008-2017) with dropdown to switch between metrics:
 Hovering over any county shows ALL available data at once.
 
 Input:
-  Merged IQVIA + CDC county panel (built inline from source data)
+  output/county/iqvia_cdc_county_merged.csv (cached; created on first run or when missing)
 
 Output:
   output/county/county_dashboard_map.html
 
 Run:
   python -m visualizations.county_dashboard_map
+
+  Add --force-merge to re-merge data (e.g. after updating source CSVs).
 """
 
 import json
@@ -30,7 +32,14 @@ import plotly.graph_objects as go
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from cdc.merge_iqvia_cdc_county import merge_county_panel
+from cdc.merge_iqvia_cdc_county import load_county_panel
+from visualizations.theme import (
+    BG_COLOR,
+    SCALE_OVERDOSE,
+    SCALE_RX,
+    SCALE_MME,
+    SCALE_MEDICAID,
+)
 
 BASE = os.path.dirname(os.path.dirname(__file__))
 OUT_HTML = os.path.join(BASE, "output", "county", "county_dashboard_map.html")
@@ -42,51 +51,29 @@ GEOJSON_URL = (
     "geojson-counties-fips.json"
 )
 
-BG_COLOR = "rgb(15, 15, 35)"
-
 METRICS = {
     "overdose_rate_per_100k": {
         "label": "Overdose Death Rate (per 100K)",
         "short": "Deaths/100K",
-        "scale": [
-            [0.00, "rgb(15,15,35)"], [0.05, "rgb(50,10,60)"],
-            [0.15, "rgb(100,15,55)"], [0.30, "rgb(160,25,40)"],
-            [0.50, "rgb(210,55,25)"], [0.70, "rgb(240,120,10)"],
-            [0.85, "rgb(255,200,30)"], [1.00, "rgb(255,255,110)"],
-        ],
+        "scale": SCALE_OVERDOSE,
         "pctile": 0.98,
     },
     "rx_per_capita": {
         "label": "Opioid Rx per 1,000 Population",
         "short": "Rx/1K pop",
-        "scale": [
-            [0.00, "rgb(15,15,35)"], [0.05, "rgb(10,30,60)"],
-            [0.15, "rgb(20,60,100)"], [0.30, "rgb(30,100,140)"],
-            [0.50, "rgb(40,150,160)"], [0.70, "rgb(80,200,170)"],
-            [0.85, "rgb(160,240,180)"], [1.00, "rgb(240,255,220)"],
-        ],
+        "scale": SCALE_RX,
         "pctile": 0.98,
     },
     "avg_mme_per_unit": {
         "label": "Average MME per Prescription Unit",
         "short": "Avg MME",
-        "scale": [
-            [0.00, "rgb(15,15,35)"], [0.05, "rgb(40,10,50)"],
-            [0.15, "rgb(80,20,80)"], [0.30, "rgb(130,30,100)"],
-            [0.50, "rgb(180,40,100)"], [0.70, "rgb(220,70,80)"],
-            [0.85, "rgb(250,130,60)"], [1.00, "rgb(255,220,100)"],
-        ],
+        "scale": SCALE_MME,
         "pctile": 0.98,
     },
     "pct_medicaid": {
         "label": "Medicaid % of Opioid Prescriptions",
         "short": "Medicaid %",
-        "scale": [
-            [0.00, "rgb(15,15,35)"], [0.05, "rgb(10,25,55)"],
-            [0.15, "rgb(20,50,100)"], [0.30, "rgb(30,80,160)"],
-            [0.50, "rgb(50,120,200)"], [0.70, "rgb(90,170,230)"],
-            [0.85, "rgb(150,210,250)"], [1.00, "rgb(230,245,255)"],
-        ],
+        "scale": SCALE_MEDICAID,
         "pctile": 0.98,
     },
 }
@@ -160,10 +147,10 @@ def _build_hover_text(df: pd.DataFrame) -> pd.Series:
     return pd.Series(lines, index=df.index)
 
 
-def build_dashboard_map() -> str:
+def build_dashboard_map(force_merge: bool = False) -> str:
     """Build the multi-metric animated county map."""
 
-    panel = merge_county_panel()
+    panel = load_county_panel(force_merge=force_merge)
 
     # Compute fentanyl rate where data exists
     if "fentanyl_deaths" in panel.columns:
@@ -221,10 +208,10 @@ def build_dashboard_map() -> str:
         scope="usa",
         bgcolor=BG_COLOR,
         lakecolor=BG_COLOR,
-        landcolor="rgb(25,25,45)",
+        landcolor="rgb(20,45,70)",
         showlakes=True, showland=True,
-        subunitcolor="rgba(100,110,140,0.25)",
-        countrycolor="rgba(100,110,140,0.4)",
+        subunitcolor="rgba(59,94,140,0.25)",
+        countrycolor="rgba(59,94,140,0.4)",
     )
 
     # ── Metric-switch buttons ──
@@ -258,7 +245,7 @@ def build_dashboard_map() -> str:
             font=dict(size=18, color="white"),
             x=0.5, xanchor="center",
         ),
-        margin=dict(l=0, r=0, t=90, b=0),
+        margin=dict(l=120, r=0, t=90, b=0),
         updatemenus=[
             # Play / Pause button
             dict(
@@ -282,20 +269,20 @@ def build_dashboard_map() -> str:
                          }]),
                 ],
                 font=dict(color="white"),
-                bgcolor="rgba(40,40,60,0.8)",
-                bordercolor="rgba(100,110,140,0.4)",
+                bgcolor="rgba(27,59,44,0.9)",
+                bordercolor="rgba(78,174,129,0.5)",
             ),
-            # Metric switcher
+            # Metric switcher (left side to avoid covering title and legend)
             dict(
                 type="buttons",
-                direction="right",
+                direction="down",
                 showactive=True,
-                x=0.5, y=1.06,
-                xanchor="center", yanchor="bottom",
+                x=-0.02, y=0.5,
+                xanchor="right", yanchor="middle",
                 buttons=metric_buttons,
-                font=dict(color="white", size=11),
-                bgcolor="rgba(40,40,60,0.8)",
-                bordercolor="rgba(100,110,140,0.4)",
+                font=dict(color="black", size=11),
+                bgcolor="rgba(255,255,255,0.95)",
+                bordercolor="rgba(100,100,100,0.5)",
                 active=0,
             ),
         ],
@@ -319,8 +306,8 @@ def build_dashboard_map() -> str:
                 xanchor="center",
             ),
             font=dict(color="white"),
-            activebgcolor="rgb(200,80,30)",
-            bgcolor="rgb(40,40,60)",
+            activebgcolor="rgb(191,161,93)",
+            bgcolor="rgb(59,94,140)",
             bordercolor="rgba(0,0,0,0)",
             tickcolor="white",
         )],
@@ -333,6 +320,8 @@ def build_dashboard_map() -> str:
 
 
 if __name__ == "__main__":
-    out = build_dashboard_map()
+    import sys
+    force = "--force-merge" in sys.argv
+    out = build_dashboard_map(force_merge=force)
     if out:
         print(f"\nDone! Open in browser:\n  {out}")

@@ -25,6 +25,7 @@ from cdc.load_wonder_county import load_county_overdose_2008_2017
 
 BASE = os.path.dirname(os.path.dirname(__file__))
 IQVIA_COUNTY_CSV = os.path.join(BASE, "output", "county", "iqvia_county_year_panel.csv")
+MERGED_CACHE_CSV = os.path.join(BASE, "output", "county", "iqvia_cdc_county_merged.csv")
 
 
 def _load_iqvia_county() -> pd.DataFrame:
@@ -68,6 +69,19 @@ def _load_drugtype_pivot() -> pd.DataFrame:
     pivot.columns.name = None
     print(f"  Drug-type pivot: {len(pivot):,} county-year rows")
     return pivot
+
+
+def load_county_panel(force_merge: bool = False) -> pd.DataFrame:
+    """
+    Load merged county panel. Uses cache if available; merges and caches only when needed.
+    Set force_merge=True to force re-merge (e.g. after updating source data).
+    """
+    if not force_merge and os.path.exists(MERGED_CACHE_CSV):
+        df = pd.read_csv(MERGED_CACHE_CSV, dtype={"county_fips": str, "state": str})
+        df["county_fips"] = df["county_fips"].astype(str).str.zfill(5)
+        print(f"  Loaded cached panel: {len(df):,} rows from {MERGED_CACHE_CSV}")
+        return df
+    return merge_county_panel()
 
 
 def merge_county_panel() -> pd.DataFrame:
@@ -127,6 +141,11 @@ def merge_county_panel() -> pd.DataFrame:
     print(f"\n  Final panel: {len(merged):,} rows")
     print(f"  Counties with BOTH Rx + death data: "
           f"{merged.loc[has_both, 'county_fips'].nunique():,}")
+
+    # Save to cache so map can load without re-merging
+    os.makedirs(os.path.dirname(MERGED_CACHE_CSV), exist_ok=True)
+    merged.to_csv(MERGED_CACHE_CSV, index=False)
+    print(f"  Cached -> {MERGED_CACHE_CSV}")
 
     return merged
 

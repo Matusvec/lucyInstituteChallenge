@@ -1,3 +1,9 @@
+"""
+Database connection configuration for the IQVIA PostgreSQL database.
+
+Used by utils.db_utils for all query modules. Credentials can be overridden
+via .env (see utils.db_utils for loading logic).
+"""
 import psycopg2
 from psycopg2 import OperationalError
 

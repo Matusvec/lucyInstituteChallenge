@@ -4,6 +4,12 @@ import matplotlib.ticker as mtick
 import pandas as pd
 import scipy.stats as stats
 import statsmodels.api as sm
+import os
+import sys
+
+BASE = os.path.dirname(os.path.dirname(__file__))
+sys.path.insert(0, BASE)
+from visualizations.theme import DARK_BLUE, MID_BLUE, GOLD_BROWN, TEAL, DARK_TEAL
 
 pd.set_option('display.max_rows', 20)
 pd.set_option('display.max_columns', 10)
@@ -168,37 +174,51 @@ print(f"  p-value:    {wilcox.pvalue:.4f}")
 fig, axes = plt.subplots(2, 1, figsize=(11, 9), sharex=True,
                          gridspec_kw={'height_ratios': [2, 1]})
 
+fig.patch.set_facecolor(DARK_BLUE)
 ax1 = axes[0]
+ax1.set_facecolor(DARK_BLUE)
 ax1.plot(timeline_df['year'], timeline_df['percent_on_medicaid'] * 100,
-         color='steelblue', marker='o', linewidth=2.2,
+         color=MID_BLUE, marker='o', linewidth=2.2,
          label='Medicaid Enrollment Share (% US Pop)')
 ax1.plot(timeline_df['year'], timeline_df['weighted_avg_medicaid_rx_rate'] * 100,
-         color='darkorange', marker='s', linewidth=2.2,
+         color=GOLD_BROWN, marker='s', linewidth=2.2,
          label='Medicaid Share of Opioid Rx (Pop-Weighted County Avg)')
 ax1.fill_between(timeline_df['year'],
                  timeline_df['percent_on_medicaid'] * 100,
                  timeline_df['weighted_avg_medicaid_rx_rate'] * 100,
-                 alpha=0.15, color='green',
+                 alpha=0.2, color=TEAL,
                  label='Gap (enrollment − Rx share)')
-ax1.set_ylabel('Percent (%)', fontsize=12)
+ax1.set_ylabel('Percent (%)', fontsize=12, color='white')
 ax1.set_title('Medicaid Population Share vs. Opioid Prescription Share\n2008–2017, US Counties (Population-Weighted)',
-              fontsize=13, fontweight='bold')
-ax1.legend(fontsize=10)
+              fontsize=13, fontweight='bold', color='white')
+ax1.legend(fontsize=10, facecolor=DARK_BLUE, edgecolor='white', labelcolor='white')
 ax1.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.1f%%'))
-ax1.grid(axis='y', linestyle='--', alpha=0.5)
+ax1.tick_params(colors='white')
+ax1.xaxis.label.set_color('white')
+ax1.spines['bottom'].set_color('white')
+ax1.spines['top'].set_color('white')
+ax1.spines['left'].set_color('white')
+ax1.spines['right'].set_color('white')
+ax1.grid(axis='y', linestyle='--', alpha=0.3, color='white')
 
 ax2 = axes[1]
-bar_colors = ['crimson' if d >= 0 else 'seagreen' for d in timeline_df['delta']]
+ax2.set_facecolor(DARK_BLUE)
+bar_colors = [GOLD_BROWN if d >= 0 else TEAL for d in timeline_df['delta']]
 ax2.bar(timeline_df['year'], timeline_df['delta'] * 100,
-        color=bar_colors, edgecolor='black', linewidth=0.6)
-ax2.axhline(0, color='black', linewidth=1.0)
-ax2.set_ylabel('Delta (pp)', fontsize=11)
-ax2.set_xlabel('Year', fontsize=12)
-ax2.set_title('Annual Delta: Rx Share − Enrollment Share\n(Green = Medicaid received less than population share)',
-              fontsize=11)
+        color=bar_colors, edgecolor='white', linewidth=0.6)
+ax2.axhline(0, color='white', linewidth=1.0)
+ax2.set_ylabel('Delta (pp)', fontsize=11, color='white')
+ax2.set_xlabel('Year', fontsize=12, color='white')
+ax2.set_title('Annual Delta: Rx Share − Enrollment Share\n(Teal = Medicaid received less than population share)',
+              fontsize=11, color='white')
 ax2.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.1f%%'))
 ax2.set_xticks(timeline_df['year'])
-ax2.grid(axis='y', linestyle='--', alpha=0.5)
+ax2.tick_params(colors='white')
+ax2.spines['bottom'].set_color('white')
+ax2.spines['top'].set_color('white')
+ax2.spines['left'].set_color('white')
+ax2.spines['right'].set_color('white')
+ax2.grid(axis='y', linestyle='--', alpha=0.3, color='white')
 
 plt.tight_layout()
 plt.savefig('medicaid_rx_vs_enrollment_timeline.png', dpi=150, bbox_inches='tight')

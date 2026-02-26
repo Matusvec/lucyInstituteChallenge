@@ -15,65 +15,27 @@ We analyzed **2.1 billion prescription records** (IQVIA, 1997–2018) combined w
 ```
 lucyInstituteChallenge/
 │
-├── main.py                     ← CLI orchestrator — runs all queries against the DB
+├── main.py                     ← CLI orchestrator — runs queries, maps, analysis
 │
-├── queries/                    ← SQL query modules (hit the IQVIA PostgreSQL DB)
-│   ├── explore_payors.py       │  Discover Medicaid plan IDs & payor categories
-│   ├── medicaid_vs_general.py  │  Q1–Q5: core Medicaid vs Non-Medicaid comparisons
-│   ├── geographic.py           │  Zip-code & state-level geographic queries
-│   ├── extended.py             │  Q6–Q9: state×year, sales channel, monthly, 2018 sample
-│   └── pill_mill.py            │  Prescriber concentration / pill mill analysis
+├── queries/                   ← SQL query modules (IQVIA PostgreSQL)
+├── analysis/                  ← Post-query statistical analysis
+├── visualizations/            ← Maps (Plotly) + charts (Matplotlib)
+├── cdc/                       ← CDC WONDER data loading & merging
+├── census/                    ← Census ACS loading & merging
+├── utils/                     ← DB connection & helpers
 │
-├── analysis/                   ← Post-query statistical analysis (runs on CSV outputs)
-│   ├── analyze.py              │  Generic CSV analyzer with auto-detect stat tests
-│   ├── deep_analysis.py        │  Cross-analysis of Q1–Q5 + CDC (10 sections)
-│   ├── extended_analysis.py    │  Analysis of Q6 (state×year) + Q7 (sales channel)
-│   ├── bridge_analysis.py      │  Integrates Q6/Q7 with Q1–Q5 + CDC
-│   ├── what_happened_2012.py   │  Forensic investigation of the 2012 inflection
-│   └── check_2018.py           │  Proves 2018 data is truncated (~3.6 months)
+├── scripts/r/                 ← Optional R maps (Medicaid vs Non-Medicaid)
+├── Datasets/                  ← Raw data (CDC, Census, shapefiles)
+├── output/                    ← Generated CSVs, maps, plots
+├── docs/                      ← Documentation
+├── instructions/              ← Challenge instructions
 │
-├── visualizations/             ← Charts and figures
-│   └── prescriptionsVsOverdose.py  │  Bar chart: Rx index vs OD death index (2012=100)
-│
-├── utils/                      ← Database connection & helper functions
-│   ├── db_connect.py           │  DB connection config (host, credentials)
-│   └── db_utils.py             │  Connection pooling, query runner, CSV export, lookup caches
-│
-├── cdc/                        ← CDC WONDER data loading & merging
-│   ├── load_wonder.py          │  Parse CDC Multiple Cause of Death CSV
-│   └── merge_iqvia_cdc.py      │  Merge IQVIA state data with CDC overdose rates
-│
-├── census/                     ← US Census ACS data loading & merging
-│   ├── load_census.py          │  Parse Census ACS tables (population, income, etc.)
-│   └── merge_iqvia_census.py   │  Merge IQVIA zip data with Census demographics
-│
-├── output/                     ← All generated CSV files (organized by source)
-│   ├── lookups/                │  Payor plan tables, Medicaid plan IDs
-│   ├── iqvia_core/             │  Q1–Q5 results (by year, state, drug, specialty)
-│   ├── extended/               │  Q6–Q7 results (state×year, sales channel)
-│   ├── cdc/                    │  CDC overdose data + merged IQVIA-CDC files
-│   └── pillmill/               │  Prescriber concentration results
-│
-├── Datasets/                   ← Raw data files (not in git — too large)
-│   ├── Multiple Cause of Death, 1999-2020.csv
-│   ├── ACSDT5Y2018.B01003*/   │  Census: total population
-│   ├── ACSDT5Y2018.B02001*/   │  Census: race/ethnicity
-│   ├── ACSDT5Y2018.B19013*/   │  Census: median household income
-│   ├── ACSST5Y2018.S1701*/    │  Census: poverty status
-│   ├── ACSST5Y2018.S2704*/    │  Census: insurance coverage
-│   └── IQVIA/                  │  IQVIA reference files
-│
-├── instructions/               ← Challenge instructions & rubric
-│   ├── summary.md              │  Challenge overview
-│   ├── IQVIA.md                │  IQVIA database documentation
-│   ├── otherData.md            │  Supplementary data sources
-│   └── rubric.md               │  Grading rubric
-│
-├── FINDINGS.md                 ← 📊 Full research findings (the deliverable)
-├── DATA_STRATEGY.md            ← Database schema & query strategy documentation
-├── leadingQuestion.md          ← Original research question
-└── requirements.txt            ← Python dependencies
+├── FINDINGS.md                ← Main research deliverable
+├── DATA_STRATEGY.md           ← Database schema & query strategy
+└── requirements.txt
 ```
+
+**Full layout →** [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
 
 ---
 
@@ -89,57 +51,99 @@ pip install -r requirements.txt
 
 ### 2. Environment Variables
 
-Create a `.env` file (already gitignored) if needed for DB overrides. The default connection config is in `utils/db_connect.py`.
+Create a `.env` file (gitignored) for DB overrides. Default config is in `utils/db_connect.py`.
 
 ### 3. Datasets
 
-The `Datasets/` folder is not in git (too large). Place it in the project root:
-- **CDC WONDER:** `Datasets/Multiple Cause of Death, 1999-2020.csv`
-- **Census ACS:** Five `ACSDT5Y*` / `ACSST5Y*` folders
+Place `Datasets/` in the project root (not in git if large):
+
+- **CDC WONDER:** `Datasets/cdc/` — overdose CSVs (county, state, drug type)
+- **Census ACS:** `Datasets/census/` — USAFacts, ACS tables
+- **Geo:** `Datasets/geo/us_counties_geojson.json` — county boundaries
 - **IQVIA reference:** `Datasets/IQVIA/`
 
 ---
 
 ## Running Queries
 
-All queries are run through `main.py`:
+All queries run through `main.py`:
 
 ```bash
 # Core Medicaid vs Non-Medicaid (Q1–Q5)
 python main.py medicaid
 
 # Individual queries
-python main.py q3              # State-level comparison
-python main.py q4              # Drug-level comparison
-python main.py q5              # Specialty-level comparison
+python main.py q3              # State-level
+python main.py q4              # Drug-level
+python main.py q5              # Specialty-level
 
-# Extended queries (Q6–Q9)
-python main.py extended        # All extended queries
+# Extended (Q6–Q9)
+python main.py extended
 python main.py q6              # State × Year panel
 python main.py q7              # Retail vs Mail Order
 
-# Other modules
+# Other
 python main.py explore         # Discover payor plan categories
-python main.py pillmill        # Prescriber concentration analysis
-python main.py cdc             # Merge IQVIA + CDC overdose data
-python main.py census          # Load Census ACS tables
-python main.py merge           # Merge IQVIA zip + Census demographics
-python main.py cdc             # Merge IQVIA state + CDC all-overdose data
-python main.py cdc-drug        # Build CDC drug-type panel + merge IQVIA state×year
-python main.py map-illicit     # Build animated US map of illicit overdose spread
+python main.py pillmill        # Prescriber concentration
+python main.py county         # County-level IQVIA panel
+python main.py cdc            # Merge IQVIA + CDC overdose
+python main.py cdc-drug       # CDC drug-type panel + illicit spread
+python main.py census         # Load Census ACS
+python main.py merge          # Merge IQVIA zip + Census
 ```
+
+---
+
+## Running Maps & Visualizations
+
+### Animated Maps (Plotly → HTML)
+
+```bash
+python main.py map-illicit     # State illicit overdose (1999–2018)
+python main.py map-county      # County overdose (2008–2017)
+python main.py map-fentanyl   # County fentanyl spread
+python main.py map-dashboard  # Multi-metric county map
+```
+
+Outputs: `output/cdc/*.html`, `output/county/*.html` — open in browser.
+
+### Charts (Matplotlib)
+
+```bash
+python scripts/python/_test_chart.py     # Rx vs Overdose indexed chart → PNG
+python scripts/python/seg_bar_graph_rough.py  # Stacked bar: prescriptions by year
+python -m visualizations.heroinVsFentanyl
+python -m visualizations.prescriptionsVsOverdose
+python -m visualizations.Medicaid_Timeline
+python -m visualizations.mme_vs_deaths_scatterplot
+python -m visualizations.mme_vs_overdose_2012_2016
+```
+
+**Full guide →** [docs/VISUALIZATIONS.md](docs/VISUALIZATIONS.md)
+
+---
 
 ## Running Analysis
 
-After queries produce CSVs in `output/`, run the analysis scripts:
+After queries produce CSVs in `output/`:
 
 ```bash
-python -m analysis.deep_analysis          # Cross-analysis of Q1–Q5 + CDC
-python -m analysis.extended_analysis      # Q6/Q7 analysis
-python -m analysis.bridge_analysis        # Integrated findings
-python -m analysis.what_happened_2012     # 2012 inflection forensics
-python -m analysis.check_2018             # Confirm 2018 truncation
+python -m analysis.deep_analysis          # Q1–Q5 + CDC cross-analysis
+python -m analysis.extended_analysis     # Q6/Q7 analysis
+python -m analysis.bridge_analysis       # Integrated findings
+python -m analysis.what_happened_2012    # 2012 inflection forensics
+python -m analysis.check_2018            # 2018 truncation check
 ```
+
+---
+
+## No Database Required
+
+These run from CSV only (no IQVIA connection):
+
+- `map-county`, `map-fentanyl` (CDC data in repo)
+- `map-illicit`, `map-dashboard` (if `cdc-drug` / `county` run previously)
+- All chart scripts (if input CSVs exist)
 
 ---
 
@@ -150,16 +154,29 @@ python -m analysis.check_2018             # Confirm 2018 truncation
 | pandas | Data manipulation |
 | numpy | Numerical computation |
 | scipy | Statistical tests |
-| matplotlib | Visualization |
-| psycopg2-binary | PostgreSQL connection |
-| python-dotenv | Environment variable loading |
+| matplotlib | Charts |
+| plotly | Interactive maps |
+| psycopg2-binary | PostgreSQL |
+| python-dotenv | Environment variables |
 
 ---
 
 ## Data Notes
 
-- **IQVIA database:** 2.1B rows on AWS RDS PostgreSQL (read-only access)
-- **Medicaid identification:** 71 payor plan IDs containing "medicaid" keyword
-- **Opioid identification:** 3,959 product groups with `drug.usc LIKE '022%'`
-- **2018 data is truncated:** Only ~3.6 months exist — use 1997–2017 for trends
-- **IQVIA raw values:** `new_rx`, `total_rx`, `new_qty`, `total_qty` must be divided by 1000
+- **IQVIA:** 2.1B rows on AWS RDS PostgreSQL (read-only)
+- **Medicaid:** 71 payor plan IDs containing "medicaid"
+- **Opioids:** 3,959 product groups with `drug.usc LIKE '022%'`
+- **2018:** Truncated (~3.6 months) — use 1997–2017 for trends
+- **IQVIA raw:** `new_rx`, `total_rx`, `new_qty`, `total_qty` ÷ 1000
+
+---
+
+## Documentation
+
+| Doc | Description |
+|-----|-------------|
+| [docs/VISUALIZATIONS.md](docs/VISUALIZATIONS.md) | How to run every map and chart |
+| [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) | Full directory layout |
+| [docs/DATA_FLOW.md](docs/DATA_FLOW.md) | Data dependencies & query→output mapping |
+| [DATA_STRATEGY.md](DATA_STRATEGY.md) | Database schema & query strategy |
+| [Datasets/DATA_CATALOG.md](Datasets/DATA_CATALOG.md) | Data catalog |

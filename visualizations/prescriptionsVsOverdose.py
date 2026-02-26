@@ -4,6 +4,7 @@ import numpy as np
 import os
 
 BASE = os.path.dirname(os.path.dirname(__file__))
+from visualizations.theme import DARK_BLUE, MID_BLUE, GOLD_BROWN, TEAL
 
 # ── IQVIA prescription totals by year ──────────────────────────────────────
 rx = pd.read_csv(os.path.join(BASE, "output", "iqvia_core", "medicaid_pct_by_year.csv"))
@@ -82,43 +83,57 @@ width = 0.35
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 14), gridspec_kw={"height_ratios": [1, 1]})
 
 # ═══ PANEL 1: Indexed (2012 = 100) ═══════════════════════════════════════
+fig.patch.set_facecolor(DARK_BLUE)
+for ax in (ax1, ax2):
+    ax.set_facecolor(DARK_BLUE)
+    ax.tick_params(colors="white")
+    ax.xaxis.label.set_color("white")
+    ax.yaxis.label.set_color("white")
+    ax.title.set_color("white")
+    for spine in ax.spines.values():
+        spine.set_color("white")
+
 ax1.bar(x - width/2, df["rx_index"], width, label="Opioid Prescriptions (IQVIA)",
-        color="#4C72B0", alpha=0.85)
+        color=MID_BLUE, alpha=0.85)
 ax1.bar(x + width/2, df["od_index"], width, label="All Overdose Deaths",
-        color="#DD8452", alpha=0.85)
-ax1.plot(x, df["illicit_index"], "s-", color="#C44E52", linewidth=2.5, markersize=6,
+        color=GOLD_BROWN, alpha=0.85)
+ax1.plot(x, df["illicit_index"], "s-", color=TEAL, linewidth=2.5, markersize=6,
          label="Illicit Drug Deaths (heroin/fentanyl/cocaine/meth)")
-ax1.plot(x, df["rx_drug_index"], "o--", color="#55A868", linewidth=2.5, markersize=6,
+ax1.plot(x, df["rx_drug_index"], "o--", color="#7AB89A", linewidth=2.5, markersize=6,
          label="Prescription Opioid Deaths (oxy/hydro/methadone)")
 
-ax1.axhline(100, color="gray", linestyle="--", alpha=0.5)
+ax1.axhline(100, color=GOLD_BROWN, linestyle="--", alpha=0.5)
 diverge_idx = list(df["year"]).index(2012)
-ax1.axvline(diverge_idx, linestyle=":", color="gray", alpha=0.6)
-ax1.annotate("2012 divergence", xy=(diverge_idx, 105), fontsize=9, color="gray",
+ax1.axvline(diverge_idx, linestyle=":", color=GOLD_BROWN, alpha=0.6)
+ax1.annotate("2012 divergence", xy=(diverge_idx, 105), fontsize=9, color=GOLD_BROWN,
              ha="center")
 
 ax1.set_xticks(x)
 ax1.set_xticklabels(df["year"].astype(int), rotation=45)
 ax1.set_ylabel("Index (2012 = 100)")
 ax1.set_title("Relative Change: Opioid Prescriptions vs Overdose Deaths (2012 = 100)")
-ax1.legend(loc="upper left", fontsize=9)
+ax1.legend(loc="upper left", fontsize=9, facecolor=DARK_BLUE, edgecolor="white", labelcolor="white")
+ax1.grid(axis="y", alpha=0.2, color="white")
 
 # ═══ PANEL 2: Raw counts ═════════════════════════════════════════════════
 ax2.bar(x, df["overdose_deaths"], width * 1.6, label="All Overdose Deaths",
-        color="#DD8452", alpha=0.45)
-ax2.plot(x, df["illicit_deaths"], "s-", color="#C44E52", linewidth=2.5, markersize=7,
+        color=GOLD_BROWN, alpha=0.45)
+ax2.plot(x, df["illicit_deaths"], "s-", color=TEAL, linewidth=2.5, markersize=7,
          label="Illicit Drug Deaths (heroin/fentanyl/cocaine/meth)")
-ax2.plot(x, df["rx_drug_deaths"], "o--", color="#55A868", linewidth=2.5, markersize=7,
+ax2.plot(x, df["rx_drug_deaths"], "o--", color="#7AB89A", linewidth=2.5, markersize=7,
          label="Prescription Opioid Deaths (oxy/hydro/methadone)")
 
 # Prescriptions on secondary y-axis (different scale)
 ax2b = ax2.twinx()
-ax2b.plot(x, df["total_rx"], "^-", color="#4C72B0", linewidth=2.5, markersize=7,
+ax2b.set_facecolor(DARK_BLUE)
+ax2b.plot(x, df["total_rx"], "^-", color=MID_BLUE, linewidth=2.5, markersize=7,
           label="Opioid Prescriptions (IQVIA)")
+ax2b.tick_params(colors="white")
+ax2b.yaxis.label.set_color("white")
 
-ax2.axvline(diverge_idx, linestyle=":", color="gray", alpha=0.6)
+ax2.axvline(diverge_idx, linestyle=":", color=GOLD_BROWN, alpha=0.6)
 ax2.annotate("2012", xy=(diverge_idx, df["overdose_deaths"].max() * 0.95),
-             fontsize=9, color="gray", ha="center")
+             fontsize=9, color=GOLD_BROWN, ha="center")
 
 # Format y-axes with thousands separator
 ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{int(v):,}"))
@@ -126,14 +141,16 @@ ax2b.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{int(v):,}"))
 
 ax2.set_xticks(x)
 ax2.set_xticklabels(df["year"].astype(int), rotation=45)
-ax2.set_ylabel("Total Deaths", color="#C44E52")
-ax2b.set_ylabel("Total Prescriptions (IQVIA)", color="#4C72B0")
+ax2.set_ylabel("Total Deaths", color=TEAL)
+ax2b.set_ylabel("Total Prescriptions (IQVIA)", color=MID_BLUE)
 ax2.set_title("Overdose Deaths & Opioid Prescriptions (Raw Counts)")
 
 # Combine legends from both axes
 lines1, labels1 = ax2.get_legend_handles_labels()
 lines2, labels2 = ax2b.get_legend_handles_labels()
-ax2.legend(lines1 + lines2, labels1 + labels2, loc="upper left", fontsize=9)
+ax2.legend(lines1 + lines2, labels1 + labels2, loc="upper left", fontsize=9,
+           facecolor=DARK_BLUE, edgecolor="white", labelcolor="white")
+ax2.grid(axis="y", alpha=0.2, color="white")
 
 plt.tight_layout()
 plt.show()
