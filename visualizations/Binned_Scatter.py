@@ -3,14 +3,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
 
-
 final_df = pd.read_csv("C:\\Users\\tmnfn\\OneDrive\\Desktop\\python shit\\hdac\\AvgMME_v_ODD.csv")
-
 final_df['Average MME'] = pd.to_numeric(final_df['Average MME'], errors='coerce')
-
-
 final_df = pd.read_csv("C:\\Users\\tmnfn\\OneDrive\\Desktop\\python shit\\hdac\\AvgMME_v_ODD.csv")
-
 final_df['Average MME'] = pd.to_numeric(final_df['Average MME'], errors='coerce')
 final_df['Deaths'] = pd.to_numeric(final_df['Deaths'], errors='coerce')
 final_df.dropna(subset=['Deaths', 'Average MME'], inplace=True)
@@ -20,7 +15,6 @@ county_df = final_df.groupby('county_code').agg(
     Avg_MME=('Average MME', 'mean'),
     Total_Deaths=('Deaths', 'sum')
 ).reset_index()
-
 print(f"Total counties after cleaning: {len(county_df)}")
 
 # --- Quantile-based binning (10 bins of roughly equal county count) ---
@@ -42,7 +36,7 @@ scatter = ax.scatter(
     binned_df['Bin_Mid'],
     binned_df['Mean_Deaths'],
     s=binned_df['Count'] * 20,
-    color='steelblue',
+    color='#0C2340',
     alpha=0.75,
     edgecolors='white',
     linewidths=0.5,
@@ -56,7 +50,7 @@ sns.regplot(
 )
 
 for count_val in [5, 20, 50]:
-    ax.scatter([], [], s=count_val * 20, color='steelblue', alpha=0.75,
+    ax.scatter([], [], s=count_val * 20, color='#0C2340', alpha=0.75,
                edgecolors='white', label=f'n = {count_val}')
 ax.legend(title='Counties per Bin', frameon=True)
 
