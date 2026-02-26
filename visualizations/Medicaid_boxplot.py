@@ -100,6 +100,11 @@ county_agg['medicaid_group'] = np.where(
 
 # ── 5. Plot 2 – Boxplots: Below vs Above Global Avg Medicaid Rx Rate ─────────
 
+DARK_BLUE = "#0C2340"
+TEAL      = "#4EAE81"
+GOLD      = "#BFA15D"
+LIGHT_BG  = "#E1E8F2"
+FADED_BG  = "#EEF3F9"
 
 county_agg_nonzero = county_agg[county_agg['overdose_rate_decade'] > 0]
 
@@ -128,7 +133,7 @@ bp = ax.boxplot(
     flierprops=dict(marker='o', markersize=3, alpha=0.4, markeredgewidth=0.5),
 )
 
-colors = ['#4C9BE8', '#E8634C']
+colors = [TEAL, GOLD]
 for patch, color in zip(bp['boxes'], colors):
     patch.set_facecolor(color)
     patch.set_alpha(0.75)
@@ -136,16 +141,16 @@ for patch, color in zip(bp['boxes'], colors):
 for i, d in enumerate(data_groups, start=1):
     med = np.median(d)
     ax.text(i, med + 0.5, f'{med:.1f}', ha='center', va='bottom',
-            fontsize=9, fontweight='bold')
+            fontsize=9, fontweight='bold', color="black")
 
 stat, pval = stats.mannwhitneyu(data_groups[0], data_groups[1], alternative='two-sided')
 ax.set_title(
     f'Overdose Death Rate by Medicaid Rx Group (2008–2017)\n'
     f'Mann-Whitney U p = {pval:.4f}',
-    fontsize=12, fontweight='bold'
+    fontsize=12, fontweight='bold', color="black"
 )
-ax.set_ylabel('Cumulative Overdose Deaths per 100k (2008–2017)', fontsize=11)
-ax.set_xlabel('Medicaid Prescription Rate Group', fontsize=11)
+ax.set_ylabel('Cumulative Overdose Deaths per 100k (2008–2017)', fontsize=11, color="black")
+ax.set_xlabel('Medicaid Prescription Rate Group', fontsize=11, color="black")
 ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0f'))
 ax.grid(True, axis='y', linestyle=':', linewidth=0.6, alpha=0.7)
 plt.tight_layout()

@@ -65,8 +65,10 @@ x_raw = county_agg['rx_per_capita']
 y_raw = county_agg['overdose_per_capita']
 
 slope, intercept, r, p_ols, se = stats.linregress(x_raw, y_raw)
+rho, p_spearman = stats.spearmanr(x_raw, y_raw)
 
-print(f"Pearson r = {r:.3f}  (p = {p_ols:.4f})")
+print(f"Pearson  r  = {r:.3f}  (p = {p_ols:.4f})")
+print(f"Spearman ρ  = {rho:.3f}  (p = {p_spearman:.4f})")
 
 # ── 4. Bin into equal-count deciles ───────────────────────────────────────────
 
@@ -78,15 +80,15 @@ bin_stats = (
     county_agg
     .groupby('rx_bin')
     .agg(
-        bin_mid       = ('rx_per_capita',      'median'),
-        mean_overdose = ('overdose_per_capita', 'mean'),
-        se_overdose   = ('overdose_per_capita', lambda v: v.std() / np.sqrt(len(v))),
-        n_counties    = ('overdose_per_capita', 'count'),
+        bin_mid         = ('rx_per_capita',      'median'),
+        mean_overdose   = ('overdose_per_capita', 'mean'),
+        se_overdose     = ('overdose_per_capita', lambda v: v.std() / np.sqrt(len(v))),
+        n_counties      = ('overdose_per_capita', 'count'),
     )
     .reset_index()
 )
 
-# OLS trendline through bin means
+# OLS trendline through bin medians
 bx = bin_stats['bin_mid']
 by = bin_stats['mean_overdose']
 b_slope, b_intercept, b_r, b_p, _ = stats.linregress(bx, by)
@@ -123,7 +125,7 @@ ax.errorbar(
     zorder=2
 )
 
-# Bin scatter dots — original size restored, legend handle shrunk separately
+# Bin scatter dots — sized by county count
 dot_sizes = bin_stats['n_counties'] * 4
 ax.scatter(
     bin_stats['bin_mid'],
@@ -133,7 +135,7 @@ ax.scatter(
     edgecolors=DARK_BLUE,
     linewidths=0.8,
     zorder=3,
-    label='Bin mean overdose rate'
+    label='Bin mean overdose rate (dot size ∝ n counties)'
 )
 
 # Trendline through bin means
@@ -146,6 +148,15 @@ ax.plot(
     label=f'Bin-level OLS trend  (r = {b_r:.2f}, p = {b_p:.3f})'
 )
 
+# Annotate each dot with n= and decile label
+for _, row in bin_stats.iterrows():
+    ax.text(
+        row['bin_mid'],
+        row['mean_overdose'] + row['se_overdose'] + 0.4,
+        f"D{int(row['rx_bin']) + 1}\nn={int(row['n_counties'])}",
+        ha='center', va='bottom', fontsize=7, color=DARK_BLUE, linespacing=1.4
+    )
+
 # Grid and spines
 ax.yaxis.grid(True, linestyle=':', linewidth=0.7, color=DARK_BLUE, alpha=0.25)
 ax.xaxis.grid(True, linestyle=':', linewidth=0.7, color=DARK_BLUE, alpha=0.25)
@@ -157,21 +168,13 @@ ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 ax.tick_params(colors=DARK_BLUE, labelsize=9)
 
-# Pearson annotation — top left, inside plot area
+# Correlation annotation
 ax.text(
-    0.02, 0.97,
-    f'Pearson r = {r:.2f}  (p = {p_ols:.3f})',
+    0.02, 0.95,
+    f'County-level Spearman ρ = {rho:.2f}  (p = {p_spearman:.3f})\n'
+    f'County-level Pearson  r = {r:.2f}  (p = {p_ols:.3f})',
     transform=ax.transAxes, fontsize=8.5,
-    color=DARK_BLUE, fontstyle='italic',
-    ha='left', va='top'
-)
-
-# Methodology note — center of right margin, rotated vertically
-fig.text(
-    0.995, 0.5,
-    'Equal-count decile bins  |  Error bars = ±1 SE  |  Suppressed CDC counties excluded',
-    fontsize=7, color=DARK_BLUE, fontstyle='italic',
-    ha='right', va='center', rotation=90
+    color=DARK_BLUE, fontstyle='italic', va='top', linespacing=1.6
 )
 
 # Labels and title
@@ -184,17 +187,20 @@ ax.set_title(
     'County Prescription Volume vs. Overdose Death Rate (2008–2017)',
     fontsize=13, fontweight='bold', color=DARK_BLUE, pad=14, loc='left'
 )
-
-ax.legend(
-    fontsize=9, framealpha=0.6, edgecolor=DARK_BLUE,
-    facecolor=LIGHT_BG, labelcolor=DARK_BLUE, loc='lower right',
-    handlelength=1.8, handleheight=0.8, markerscale=0.3
+ax.text(
+    0.0, 1.03,
+    'Equal-count decile bins (D1=lowest Rx, D10=highest)  |  '
+    'Error bars = ±1 SE  |  Counties with suppressed CDC data excluded',
+    transform=ax.transAxes, fontsize=7.5, color=DARK_BLUE, fontstyle='italic'
 )
+
+ax.legend(fontsize=9, framealpha=0.6, edgecolor=DARK_BLUE,
+          facecolor=LIGHT_BG, labelcolor=DARK_BLUE, loc='lower right')
 
 # Teal title underline
 fig.add_axes([0.09, 0.895, 0.65, 0.008]).set_facecolor(TEAL)
 fig.axes[-1].set_axis_off()
 
-plt.tight_layout(rect=[0.02, 0, 0.99, 1])
+plt.tight_layout(rect=[0.02, 0, 1, 1])
 plt.savefig('binscatter_rx_per_capita_vs_overdose.png', dpi=150, facecolor=FADED_BG)
 plt.show()
