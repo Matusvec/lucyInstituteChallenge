@@ -8,11 +8,29 @@ Overview of data sources, file locations, and how data flows through the pipelin
 
 | Source | Location | Description |
 |--------|----------|-------------|
-| **IQVIA** | AWS RDS PostgreSQL | 2.1B prescription records (1997–2018) |
+| **IQVIA** | AWS RDS PostgreSQL | 2.1B prescription records (1997-2018) |
 | **CDC WONDER** | `Datasets/cdc/` | Overdose mortality by state, county, drug type |
-| **Census ACS** | `Datasets/census/` | Population, income, insurance |
+| **Census ACS** | `Datasets/ACSDT*`, `Datasets/ACSST*` | Population, income, poverty, insurance, race by zip |
 | **USAFacts** | `Datasets/census/USAFacts_health_data.csv` | Medicaid enrollment by county |
-| **Geo** | `Datasets/geo/us_counties_geojson.json` | County boundaries for maps |
+| **Geo** | `Datasets/geo/` | County GeoJSON, ZCTA-to-county crosswalk |
+
+---
+
+## Census ACS 5-Year Estimates (Datasets/ACSDT*, ACSST*)
+
+These folders contain American Community Survey (ACS) 5-year estimates from the
+U.S. Census Bureau. Each folder corresponds to a specific ACS table:
+
+| Table ID | Description | Used For |
+|----------|-------------|----------|
+| B01003 | Total Population | Population by zip code |
+| B02001 | Race & Ethnicity | Demographic context |
+| B19013 | Median Household Income | Socioeconomic context |
+| S1701 | Poverty Status | Poverty rates by zip |
+| S2704 | Health Insurance Coverage | Insurance coverage by zip |
+
+The `census/load_census.py` module reads these tables and merges them into a
+single zip-level DataFrame for use with IQVIA prescription data.
 
 ---
 
@@ -21,12 +39,11 @@ Overview of data sources, file locations, and how data flows through the pipelin
 | Directory | Contents |
 |-----------|----------|
 | `output/lookups/` | Payor plans, Medicaid IDs |
-| `output/iqvia_core/` | Q1–Q5 results (by year, state, drug, specialty) |
-| `output/extended/` | Q6–Q9 (state×year, sales channel, monthly) |
-| `output/county/` | County panel, dashboard map |
+| `output/iqvia_core/` | Q1-Q5 results (by year, state, drug, specialty) |
+| `output/extended/` | Q6-Q9 (state x year, sales channel, monthly) |
+| `output/county/` | County panel, merged data, dashboard map |
 | `output/cdc/` | CDC merges, drug-type panel, map HTMLs |
 | `output/plots/` | Generated chart images |
-| `output/pillmill/` | Prescriber concentration |
 
 ---
 
@@ -36,19 +53,9 @@ Overview of data sources, file locations, and how data flows through the pipelin
 |------|--------------|---------|
 | `output/cdc/cdc_illicit_overdose_by_state_year.csv` | `main.py cdc-drug` | illicit_overdose_spread map |
 | `output/county/iqvia_county_year_panel.csv` | `main.py county` | county_dashboard_map, MME charts |
-| `output/extended/medicaid_vs_nonmedicaid_by_state_year.csv` | `main.py extended` | R maps |
+| `output/county/iqvia_cdc_county_merged.csv` | `cdc/merge_iqvia_cdc_county.py` | county_dashboard_map |
+| `output/extended/medicaid_vs_nonmedicaid_by_state_year.csv` | `main.py extended` | Analysis |
 | `output/iqvia_core/medicaid_vs_nonmedicaid_by_year.csv` | `main.py medicaid` | Charts, analysis |
 | `Datasets/cdc/overdose_by_county_year_2008-2017.csv` | Raw CDC | county maps |
 | `Datasets/cdc/overdose_by_county_drugtype_*.csv` | Raw CDC | fentanyl map |
-
----
-
-## Data Flow
-
-1. **IQVIA DB** → `main.py explore` → `output/lookups/medicaid_plan_ids.csv`
-2. **IQVIA DB** → `main.py medicaid` → `output/iqvia_core/medicaid_vs_nonmedicaid_by_*.csv`
-3. **IQVIA DB** → `main.py county` → `output/county/iqvia_county_year_panel.csv`
-4. **CDC CSVs** → `main.py cdc-drug` → `output/cdc/cdc_illicit_overdose_by_state_year.csv`
-5. **IQVIA + CDC** → Maps & charts
-
-See [DATA_FLOW.md](DATA_FLOW.md) for query→output mapping.
+| `Datasets/geo/zcta_county_rel_10.csv` | Census / county_panel.py | Zip-to-county aggregation |

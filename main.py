@@ -21,7 +21,6 @@ Usage
     python main.py q7               # only Q7 (retail vs mail order)
     python main.py q8               # only Q8 (monthly seasonality)
     python main.py q9               # only Q9 (stratified 2018 sample)
-    python main.py pillmill          # prescriber concentration / pill mill analysis
     python main.py county           # county-level panel (zip→county), 2008-2017
     python main.py geo              # only geographic / zip-code queries
     python main.py geo-light        # only state-level + zip % (faster)
@@ -44,7 +43,6 @@ from queries import explore_payors
 from queries import medicaid_vs_general
 from queries import geographic
 from queries import extended
-from queries import pill_mill
 from queries import county_panel
 from census import load_census
 from census import merge_iqvia_census
@@ -212,12 +210,6 @@ def run_q9():
     export_to_csv(df, "sample_2018_for_regression.csv", subdir="extended")
     print(f"  Q9 done in {(time.time()-t0)/60:.1f} min")
 
-def run_pillmill():
-    """Prescriber concentration / pill mill analysis."""
-    print("\n" + "=" * 60)
-    print("PILL MILL ANALYSIS — PRESCRIBER CONCENTRATION")
-    print("=" * 60)
-    pill_mill.run_all(save=True)
 
 def run_cdc():
     """Step 7 – Merge IQVIA state data with CDC WONDER overdose deaths."""
@@ -358,8 +350,6 @@ def main():
         run_q6()
         run_q7()
         run_q8()
-    elif mode == "pillmill":
-        run_pillmill()
     elif mode == "geo":
         run_geo(light=False)
     elif mode == "geo-light":
@@ -392,7 +382,7 @@ def main():
         run_merge()
     else:
         print(f"Unknown mode '{mode}'. Use: explore | medicaid | q3 | q4 | q5 | q3q4q5 | q4q5 | "
-              f"extended | q6 | q7 | q8 | q9 | q6q7q8 | pillmill | geo | geo-light | "
+              f"extended | q6 | q7 | q8 | q9 | q6q7q8 | geo | geo-light | "
               f"county | census | merge | cdc | cdc-drug | map-illicit | map-county | map-fentanyl | map-dashboard | map-mme | all")
         sys.exit(1)
 

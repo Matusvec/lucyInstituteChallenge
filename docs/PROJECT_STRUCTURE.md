@@ -1,6 +1,6 @@
 # Project Structure
 
-Complete directory layout and file purposes for the Lucy Institute Health Challenge.
+Complete directory layout for the Lucy Institute Health Challenge.
 
 ---
 
@@ -8,148 +8,154 @@ Complete directory layout and file purposes for the Lucy Institute Health Challe
 
 ```
 lucyInstituteChallenge/
-├── main.py                 # CLI entry point — run queries, maps, charts
-├── requirements.txt        # Python dependencies
-├── README.md               # Project overview
-├── .gitignore
-├── .env                    # Database credentials (gitignored)
-│
-├── scripts/
-│   ├── python/             # Standalone Python scripts
-│   │   ├── _test_chart.py  # Saves prescriptionsVsOverdose as PNG
-│   │   └── seg_bar_graph_rough.py  # Stacked bar: prescriptions by year
-│   └── r/                  # R maps (optional)
-│
-├── DATA_STRATEGY.md        # Database schema & query strategy
-├── FINDINGS.md             # Research findings (main deliverable)
-├── leadingQuestion.md      # Original research question
-├── suggestions.md          # Project suggestions
-│
-├── instructions/           # Challenge instructions
-├── docs/                   # Additional documentation
-│   ├── deliverables/       # Story2Lucy.pdf, story_sources, Gameplan.jpg
-│   └── misc/               # Miscellaneous notes
-├── analysis/               # Statistical analysis scripts
-├── cdc/                    # CDC WONDER data loading
-├── census/                 # Census ACS loading
-├── queries/                # SQL query modules
-├── utils/                  # DB connection & helpers
-├── visualizations/         # Maps, charts, figures
-├── Datasets/               # Raw data files
-├── output/                 # Generated outputs
-├── Shape Files/            # US state boundaries (for R maps)
-└── (misc: .zip, .xls, etc.)
+|-- main.py                     # CLI entry point -- runs queries, maps, analysis
+|-- requirements.txt            # Python dependencies
+|-- README.md                   # Project overview and setup instructions
+|-- .gitignore                  # Git ignore rules
+|-- .env                        # Database credentials (gitignored)
+|
+|-- visualizations/             # Active map scripts (Plotly HTML maps)
+|   |-- county_overdose_spread.py    # County overdose deaths per 100K
+|   |-- fentanyl_spread.py           # Fentanyl/synthetic opioid county map
+|   |-- illicit_overdose_spread.py   # Illicit overdose state-level map
+|   |-- county_dashboard_map.py      # Multi-metric dashboard (4 layers)
+|   |-- mme_spread_map.py            # MME distribution county map
+|   +-- theme.py                     # Shared color scales and styling
+|
+|-- queries/                    # IQVIA PostgreSQL query modules
+|   |-- medicaid_vs_general.py       # Q1-Q5: Medicaid vs Non-Medicaid
+|   |-- geographic.py                # Zip and state-level queries
+|   |-- extended.py                  # Q6-Q9: State x year, sales channel
+|   |-- county_panel.py              # County-level panel (zip-to-county)
+|   |-- mme_spread.py                # MME 5-number summary and data
+|   +-- explore_payors.py            # Payor plan category discovery
+|
+|-- cdc/                        # CDC WONDER data loading and merging
+|   |-- load_wonder.py               # State-level overdose (1999-2020)
+|   |-- load_wonder_county.py        # County-level overdose (2008-2017)
+|   |-- load_wonder_county_drugtype.py # County by drug type (fentanyl, etc.)
+|   |-- load_wonder_drug_types.py    # State by drug type + illicit panel
+|   |-- merge_iqvia_cdc.py           # IQVIA + CDC state-level merge
+|   |-- merge_iqvia_cdc_county.py    # IQVIA + CDC county-level merge
+|   +-- merge_iqvia_cdc_drugtype.py  # IQVIA + CDC drug-type merge
+|
+|-- census/                     # Census ACS data loading
+|   |-- load_census.py               # Load ACS tables (population, income, etc.)
+|   +-- merge_iqvia_census.py        # Merge IQVIA zip data with Census
+|
+|-- utils/                      # Database connection and helpers
+|   |-- db_connect.py                # PostgreSQL connection config
+|   +-- db_utils.py                  # Connection pool, CSV export, lookups
+|
+|-- tests/                      # Automated verification
+|   +-- test_visualization_data.py   # Data formula checks for all maps
+|
+|-- archive/                    # Archived scripts (still runnable)
+|   |-- visualizations/              # Non-map chart scripts (Matplotlib)
+|   |   |-- heroinVsFentanyl.py           # Heroin vs fentanyl death trends
+|   |   |-- divergence_plot.py            # Rx decline vs overdose rise
+|   |   |-- Medicaid_Timeline.py          # Medicaid Rx vs enrollment timeline
+|   |   |-- Medicaid_boxplot.py           # Overdose by Medicaid Rx group
+|   |   |-- prescriptionsVsOverdose.py    # Binscatter: Rx vs overdose
+|   |   |-- mme_vs_overdose_2012_2016.py  # MME vs overdose scatter
+|   |   |-- mme_vs_deaths_scatterplot.py  # MME vs deaths by county
+|   |   +-- (more chart scripts)
+|   |-- analysis/                    # Statistical analysis scripts
+|   |   |-- deep_analysis.py              # Q1-Q5 + CDC cross-analysis
+|   |   |-- extended_analysis.py          # Q6/Q7 analysis
+|   |   |-- bridge_analysis.py            # Integrated findings
+|   |   |-- what_happened_2012.py         # 2012 inflection forensics
+|   |   |-- analyze.py                    # Generic CSV analyzer
+|   |   +-- check_2018.py                 # 2018 data truncation check
+|   +-- scripts/                     # Legacy scripts
+|       |-- python/                       # Early Python prototypes
+|       +-- r/                            # R map scripts (optional)
+|
+|-- Datasets/                   # Raw data files
+|   |-- cdc/                         # CDC WONDER overdose CSVs
+|   |-- census/                      # USAFacts Medicaid enrollment
+|   |-- geo/                         # GeoJSON + ZCTA-county crosswalk
+|   |-- shapefiles/                  # US state boundary shapefiles
+|   |-- IQVIA/                       # IQVIA reference files
+|   |-- archive/                     # Legacy/unused data files
+|   |-- ACSDT5Y2018.B01003*/         # Census: Total Population
+|   |-- ACSDT5Y2018.B02001*/         # Census: Race & Ethnicity
+|   |-- ACSDT5Y2018.B19013*/         # Census: Median Household Income
+|   |-- ACSST5Y2018.S1701*/          # Census: Poverty Status
+|   |-- ACSST5Y2018.S2704*/          # Census: Health Insurance Coverage
+|   +-- DATA_CATALOG.md              # Data file descriptions
+|
+|-- output/                     # Generated outputs
+|   |-- cdc/                         # CDC-related CSVs + HTML maps
+|   |-- county/                      # County panel CSVs + dashboard map
+|   |-- iqvia_core/                  # Q1-Q5 result CSVs
+|   |-- extended/                    # Q6-Q9 result CSVs
+|   |-- lookups/                     # Payor plan and Medicaid ID lookups
+|   +-- plots/                       # Generated charts and PNGs
+|
++-- docs/                      # Documentation
+    |-- FINDINGS.md                  # Complete research findings
+    |-- VISUALIZATION_GUIDE.md       # Map descriptions and usage
+    |-- PROJECT_STRUCTURE.md         # This file
+    |-- DATA_FLOW.md                 # Data pipeline documentation
+    |-- DATA_GUIDE.md                # Dataset source descriptions
+    |-- DATA_STRATEGY.md             # Database schema and query strategy
+    |-- deliverables/                # Presentation materials
+    +-- instructions/                # Challenge instructions and rubric
 ```
 
 ---
 
-## Python Modules
+## Module Descriptions
 
 ### `main.py`
-CLI orchestrator. Run `python main.py <mode>` for:
-- **explore** — Discover Medicaid payor IDs
-- **medicaid** — Q1–Q5 Medicaid vs Non-Medicaid
-- **geo** / **geo-light** — Zip/state geographic data
-- **extended** — Q6–Q9 (state×year, sales channel, etc.)
-- **county** — County-level IQVIA panel
-- **census** — Load Census ACS
-- **merge** — Merge IQVIA + Census
-- **cdc** — Merge IQVIA + CDC overdose
-- **cdc-drug** — CDC drug-type panel
-- **map-illicit** | **map-county** | **map-fentanyl** | **map-dashboard** — Animated maps
-- **pillmill** — Prescriber concentration
 
-### `queries/`
-SQL modules that hit the IQVIA PostgreSQL database:
-- `explore_payors.py` — Payor plan discovery
-- `medicaid_vs_general.py` — Q1–Q5
-- `geographic.py` — Zip/state queries
-- `extended.py` — Q6–Q9
-- `county_panel.py` — County aggregation
-- `pill_mill.py` — Prescriber concentration
+CLI orchestrator. Run `python main.py <mode>` where mode is one of:
 
-### `cdc/`
-CDC WONDER data loading and merging:
-- `load_wonder.py` — State-level overdose
-- `load_wonder_county.py` — County overdose
-- `load_wonder_county_drugtype.py` — County by drug type
-- `load_wonder_drug_types.py` — State by drug type
-- `merge_iqvia_cdc.py` — IQVIA + CDC state
-- `merge_iqvia_cdc_county.py` — IQVIA + CDC county
-- `merge_iqvia_cdc_drugtype.py` — IQVIA + CDC drug-type
-
-### `census/`
-- `load_census.py` — Load Census ACS tables
-- `merge_iqvia_census.py` — Merge IQVIA zip + Census
-- `USAFacts_health_data.csv` — Medicaid enrollment (for Medicaid_Timeline)
-
-### `analysis/`
-Post-query analysis (runs on output CSVs):
-- `analyze.py` — Generic CSV analyzer
-- `deep_analysis.py` — Q1–Q5 + CDC cross-analysis
-- `extended_analysis.py` — Q6/Q7 analysis
-- `bridge_analysis.py` — Integrated findings
-- `what_happened_2012.py` — 2012 inflection
-- `check_2018.py` — 2018 truncation check
-
-### `utils/`
-- `db_connect.py` — DB connection config
-- `db_utils.py` — Connection pool, export, lookups
+| Mode | Description |
+|------|-------------|
+| `explore` | Discover Medicaid payor plan IDs |
+| `medicaid` | Q1--Q5: Medicaid vs Non-Medicaid comparisons |
+| `q3`, `q4`, `q5` | Individual query modules |
+| `geo`, `geo-light` | Zip and state-level geographic data |
+| `extended` | Q6--Q9: State x year, sales channel, etc. |
+| `county` | County-level IQVIA panel (zip-to-county) |
+| `census` | Load Census ACS tables |
+| `merge` | Merge IQVIA + Census |
+| `cdc` | Merge IQVIA + CDC overdose |
+| `cdc-drug` | CDC drug-type panel + illicit spread |
+| `map-illicit` | Illicit overdose state map |
+| `map-county` | County overdose spread map |
+| `map-fentanyl` | Fentanyl county spread map |
+| `map-dashboard` | Multi-metric county dashboard |
+| `map-mme` | MME spread map + 5-number summary |
 
 ### `visualizations/`
-**Maps (Plotly → HTML):**
-- `illicit_overdose_spread.py`
-- `county_overdose_spread.py`
-- `fentanyl_spread.py`
-- `county_dashboard_map.py`
 
-**Charts (Matplotlib):**
-- `heroinVsFentanyl.py`
-- `prescriptionsVsOverdose.py`
-- `Medicaid_Timeline.py`
-- `merge_mme_overdose_county.py`
-- `mme_vs_deaths_scatterplot.py`
-- `mme_vs_overdose_2012_2016.py`
-- `Merge_ODD_MME_county_year.py`, `!Script_MME_ODD_Scatterplot.py`
-- `MMEvsOverdosedeath (2012-2016)` — Simple scatter (no extension)
+Active animated map scripts that produce the HTML map outputs used in
+the presentation. Each script loads data, builds Plotly choropleth
+frames, and writes an interactive HTML file.
 
----
+### `queries/`
 
-## Data Directories
+SQL query modules that connect to the IQVIA PostgreSQL database.
+Each module handles connection pooling, chunked queries, caching
+lookups, and CSV export via utilities in `utils/`.
 
-### `Datasets/`
-Raw data (CDC, Census, shapefiles, etc.):
-- `cdc/` — CDC WONDER CSVs
-- `geo/` — GeoJSON (counties)
-- `shapefiles/` — US state boundaries
-- `census/` — USAFacts copies
-- `IQVIA/` — IQVIA reference files
-- `archive/` — Zips, sample files
-- `archive/from_root/` — Former root-level zips (cb_2018_*.zip, zip_to_county.zip, sample_-_superstore.xls)
-- `DATA_CATALOG.md` — Data catalog
+### `cdc/`
 
-### `output/`
-Generated outputs:
-- `output/cdc/` — CDC CSVs + HTML maps
-- `output/county/` — County panel + dashboard map
-- `output/extended/` — Q6–Q9 results
-- `output/iqvia_core/` — Q1–Q5 results
-- `output/lookups/` — Payor plans, Medicaid IDs
-- `output/pillmill/` — Prescriber concentration
-- `output/plots/` — Generated charts/images
+Loaders for CDC WONDER Multiple Cause of Death data. Each loader
+reads CSVs from `Datasets/cdc/`, cleans and filters them, and
+provides DataFrames to the merge and visualization modules.
 
----
+### `census/`
 
-## `docs/`
-- `VISUALIZATIONS.md` — How to run visualizations
-- `DATA_FLOW.md` — Data dependencies
-- `PROJECT_STRUCTURE.md` — This file
+Loaders for Census ACS 5-year estimates. `load_census.py` reads
+the five ACS table folders (population, race, income, poverty,
+insurance) and combines them into a single zip-level DataFrame.
 
----
+### `archive/`
 
-## `scripts/r/`
-Optional R scripts:
-- `mapView.Rmd` — Medicaid vs Non-Medicaid state map
-- `State_Map.Rmd` — Same, alternate version
-- `IQVIA_hookup.R` — DB connection from R
-- `README.md` — R usage instructions
+Scripts that were used during development and are preserved for
+reference. All paths have been updated so they remain runnable
+via `python -m archive.visualizations.<script_name>`.

@@ -1,32 +1,36 @@
 # Visualizations
 
-Maps and charts for the Lucy Institute Health Challenge.
+Active animated map scripts for the Lucy Institute Health Challenge.
+Each script produces an interactive HTML choropleth map via Plotly.
 
-## Maps (Plotly → HTML)
+## Maps
 
-Run via `main.py`:
+| Script | Command | Output | Description |
+|--------|---------|--------|-------------|
+| `county_overdose_spread.py` | `python main.py map-county` | `output/cdc/county_overdose_spread_map.html` | County-level overdose death rate per 100K (2008--2017) |
+| `fentanyl_spread.py` | `python main.py map-fentanyl` | `output/cdc/fentanyl_spread_map.html` | Fentanyl/synthetic opioid deaths by county (2008--2017) |
+| `illicit_overdose_spread.py` | `python main.py map-illicit` | `output/cdc/illicit_overdose_spread_map.html` | Illicit drug overdose trends by state (1999--2018) |
+| `county_dashboard_map.py` | `python main.py map-dashboard` | `output/county/county_dashboard_map.html` | Multi-metric dashboard with 4 switchable layers |
+| `mme_spread_map.py` | `python main.py map-mme` | `output/plots/mme_spread_map.html` | Average MME per prescription unit by county (2008--2017) |
 
-| Script | Command | Output |
-|--------|---------|--------|
-| `illicit_overdose_spread.py` | `python main.py map-illicit` | `output/cdc/illicit_overdose_spread_map.html` |
-| `county_overdose_spread.py` | `python main.py map-county` | `output/cdc/county_overdose_spread_map.html` |
-| `fentanyl_spread.py` | `python main.py map-fentanyl` | `output/cdc/fentanyl_spread_map.html` |
-| `county_dashboard_map.py` | `python main.py map-dashboard` | `output/county/county_dashboard_map.html` |
+## Shared Module
 
-## Charts (Matplotlib)
+- `theme.py` -- Color scales, background colors, and Plotly colorscale
+  definitions shared across all maps.
 
-| Script | Run | Output |
-|--------|-----|--------|
-| `heroinVsFentanyl.py` | `python -m visualizations.heroinVsFentanyl` | Window |
-| `prescriptionsVsOverdose.py` | `python -m visualizations.prescriptionsVsOverdose` or `scripts/python/_test_chart.py` | PNG via `_test_chart.py` |
-| `Medicaid_Timeline.py` | `python -m visualizations.Medicaid_Timeline` | `medicaid_rx_vs_enrollment_timeline.png` |
-| `merge_mme_overdose_county.py` | `python -m visualizations.merge_mme_overdose_county` | Merged CSV |
-| `mme_vs_deaths_scatterplot.py` | `python -m visualizations.mme_vs_deaths_scatterplot` | `output/plots/mme_vs_deaths_by_county.png` |
-| `mme_vs_overdose_2012_2016.py` | `python -m visualizations.mme_vs_overdose_2012_2016` | `output/plots/mme_vs_overdose_2012_2016.png` |
+## Data Sources
 
-## Data Dependencies
+- **CDC data:** `Datasets/cdc/` (overdose CSVs by state, county, drug type)
+- **GeoJSON:** `Datasets/geo/us_counties_geojson.json` (county boundaries)
+- **IQVIA panel:** `output/county/iqvia_cdc_county_merged.csv` (merged data)
 
-- **Maps:** `Datasets/cdc/`, `Datasets/geo/us_counties_geojson.json`, `output/cdc/`, `output/county/`
-- **Charts:** `output/iqvia_core/`, `output/cdc/`, `output/county/`, `Datasets/census/`
+## Archived Charts
 
-See [docs/VISUALIZATIONS.md](../docs/VISUALIZATIONS.md) for full instructions.
+Non-map visualizations (Matplotlib scatter plots, bar charts, timelines)
+are in `archive/visualizations/`. They remain runnable:
+
+```bash
+python -m archive.visualizations.heroinVsFentanyl
+python -m archive.visualizations.divergence_plot
+python -m archive.visualizations.mme_vs_overdose_2012_2016
+```

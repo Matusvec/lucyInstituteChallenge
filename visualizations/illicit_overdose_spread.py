@@ -99,4 +99,4 @@ def build_map() -> str:
 
 if __name__ == "__main__":
     out = build_map()
-    print(f"✅ Wrote animated map: {out}")
+    print(f"  Wrote animated map: {out}")

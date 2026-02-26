@@ -1,110 +1,140 @@
-# Visualization Guide — What Each Map & Tab Does
+# Visualization Guide
 
-## Animated Maps (HTML)
-
-### 1. Illicit Overdose Spread Map
-**File:** `output/cdc/illicit_overdose_spread_map.html`
-
-**What it shows:** State-level death rate from **illicit-proxy** drug overdoses (heroin, synthetic opioids/fentanyl, cocaine, psychostimulants) per 100,000 population, 1999–2018.
-
-**Data source:** CDC WONDER Multiple Cause of Death, drug-type breakout. Built by `python main.py cdc-drug` → `output/cdc/cdc_illicit_overdose_by_state_year.csv`.
-
-**Note:** Deaths can list multiple drug types (e.g., heroin + fentanyl). Summing across categories may overcount; this is a **proxy** for illicit spread intensity.
+Descriptions of each map and chart, what data they use, and how to regenerate them.
 
 ---
 
-### 2. County Overdose Spread Map
+## Animated Maps (Plotly HTML)
+
+### 1. County Overdose Spread Map
+
 **File:** `output/cdc/county_overdose_spread_map.html`
+**Run:** `python main.py map-county`
 
-**What it shows:** County-level **all drug overdose** death rate per 100,000 population, 2008–2017.
+Shows county-level **all drug overdose death rate** per 100,000 population,
+animated from 2008 to 2017. Grey counties have suppressed data (< 10 deaths).
 
-**Data source:** CDC WONDER `overdose_by_county_year_2008-2017.csv` (all drug-induced causes).
-
-**Note:** Grey/suppressed = CDC suppresses counts &lt;10 for privacy.
+**Data:** CDC WONDER `Datasets/cdc/overdose_by_county_year_2008-2017.csv`.
 
 ---
 
-### 3. Fentanyl Spread Map
+### 2. Fentanyl Spread Map
+
 **File:** `output/cdc/fentanyl_spread_map.html`
+**Run:** `python main.py map-fentanyl`
 
-**What it shows:** County-level death rate from **fentanyl/synthetic opioids** (ICD-10 T40.4) per 100,000 population, 2008–2017.
+Shows county-level death rate from **fentanyl and synthetic opioids**
+(ICD-10 T40.4) per 100,000 population, 2008--2017. Fentanyl was rare
+before 2013; this map reveals its geographic spread from the Northeast.
 
-**Data source:** CDC WONDER county × drug-type files (`overdose_by_county_drugtype_2008-2012.csv`, `_2013-2017.csv`), filtered to T40.4.
+**Data:** CDC WONDER county x drug-type files
+(`Datasets/cdc/overdose_by_county_drugtype_2008-2012.csv`,
+`Datasets/cdc/overdose_by_county_drugtype_2013-2017.csv`),
+filtered to T40.4 (synthetic opioids).
 
-**Note:** Fentanyl was rare before ~2013; the map shows its geographic spread.
+---
+
+### 3. Illicit Overdose Spread Map
+
+**File:** `output/cdc/illicit_overdose_spread_map.html`
+**Run:** `python main.py map-illicit`
+
+Shows state-level death rate from **illicit-proxy drug overdoses** (heroin,
+synthetic opioids/fentanyl, cocaine, psychostimulants) per 100,000
+population, 1999--2018.
+
+**Data:** CDC WONDER state-level drug-type breakout.
+Built by `python main.py cdc-drug`.
+
+**Note:** Deaths can list multiple drug types (e.g., heroin + fentanyl),
+so this is a proxy for illicit spread intensity.
 
 ---
 
 ### 4. County Dashboard Map
+
 **File:** `output/county/county_dashboard_map.html`
+**Run:** `python main.py map-dashboard`
 
-**What it shows:** County-level map with a **metric switcher** (left side). You can switch between four metrics:
+Multi-metric county map with a **metric switcher** offering four views:
 
-| Tab / Option | What it shows |
-|--------------|---------------|
-| **Deaths/100K** | Overdose death rate per 100,000 population (CDC). Same concept as County Overdose Spread but in a multi-metric view. |
-| **Rx/1K pop** | Opioid prescriptions per 1,000 population. From IQVIA `total_rx` ÷ population × 1000. |
-| **Avg MME** | Average morphine milligram equivalent (MME) per prescription unit. From IQVIA county panel (qty-weighted). |
-| **Medicaid %** | Share of opioid prescriptions paid by Medicaid. From IQVIA (medicaid_rx ÷ total_rx × 100). |
+| Metric | Description |
+|--------|-------------|
+| **Deaths/100K** | Overdose death rate per 100,000 population (CDC) |
+| **Rx/1K pop** | Opioid prescriptions per 1,000 population (IQVIA) |
+| **Avg MME** | Average morphine milligram equivalent per prescription unit |
+| **Medicaid %** | Share of opioid prescriptions paid by Medicaid |
 
-**Data source:** Merged panel from IQVIA county panel + CDC county overdose + CDC drug-type pivot. Cached at `output/county/iqvia_cdc_county_merged.csv`.
-
-**Hover:** Shows all metrics for that county-year (deaths, population, Rx, MME, Medicaid %, etc.).
+**Data:** Merged panel from IQVIA county panel + CDC county overdose.
+Cached at `output/county/iqvia_cdc_county_merged.csv`.
 
 ---
 
 ### 5. MME Spread Map
+
 **File:** `output/plots/mme_spread_map.html`
+**Run:** `python main.py map-mme`
 
-**What it shows:** Geographic spread of **average MME per prescription unit** across IQVIA counties, 2008–2017. A choropleth map with year slider and play/pause.
+Shows the geographic spread of **average MME per prescription unit** across
+IQVIA counties, 2008--2017. Includes a year slider and play/pause controls.
+Running this also prints the 5-number summary (min, Q1, median, Q3, max).
 
-**5-number summary** (printed when building):
-- Min, Q1, Median, Q3, Max
-- Range (max − min)
-
-**Data source:** IQVIA county panel (`avg_mme_per_unit` = qty-weighted MME per unit). Loads from merged cache or `iqvia_county_year_panel.csv`.
-
-**Run:** `python main.py map-mme` or `python -m visualizations.mme_spread_map`
+**Data:** IQVIA county panel (`avg_mme_per_unit`).
 
 ---
 
-## Data Accuracy Summary
+## Archived Charts (Matplotlib)
 
-| Visualization | Data | Accuracy |
-|---------------|------|----------|
-| Illicit Overdose | CDC drug-type, illicit categories summed | Proxy (possible overlap/double-count across drug types) |
-| County Overdose | CDC all drug overdose by county | Direct CDC counts and rates |
-| Fentanyl | CDC T40.4 only | Direct CDC counts and rates |
-| Dashboard | IQVIA + CDC merge on (county_fips, year) | IQVIA from DB; CDC from CSVs; merge is outer so some counties have Rx-only or CDC-only |
-| MME Spread | IQVIA county panel avg_mme_per_unit | Same as Dashboard MME metric; qty-weighted MME per unit |
-
----
-
-## Regenerating Maps
+Located in `archive/visualizations/`. Run with:
 
 ```bash
-.venv\Scripts\Activate.ps1
-python main.py map-illicit
+python -m archive.visualizations.<script_name>
+```
+
+| Chart | Script | What It Shows |
+|-------|--------|---------------|
+| Heroin vs Fentanyl Deaths | `heroinVsFentanyl.py` | National death trends showing fentanyl surpassing heroin |
+| Rx vs Overdose Divergence | `divergence_plot.py` | Prescriptions declining while overdose deaths rise |
+| Medicaid Timeline | `Medicaid_Timeline.py` | Medicaid Rx volume vs enrollment over time |
+| Binscatter Rx vs Overdose | `prescriptionsVsOverdose.py` | County Rx per capita vs overdose rate |
+| MME vs Overdose 2012--2016 | `mme_vs_overdose_2012_2016.py` | National average MME vs overdose deaths |
+
+---
+
+## Regenerating All Maps
+
+```bash
 python main.py map-county
 python main.py map-fentanyl
+python main.py map-illicit
 python main.py map-dashboard
 python main.py map-mme
 ```
-
-Dashboard uses cached merge; add `--force-merge` when running the module directly to re-merge after updating source data.
 
 ---
 
 ## Data Verification
 
-Run comprehensive tests to verify visualization data matches source formulas:
+Run automated tests to verify visualization data matches source formulas:
 
 ```bash
-python -m tests.test_visualization_data
+python -m pytest tests/ -v
 ```
 
-**Verified:**
-- **Illicit Overdose:** rate = deaths/pop × 100,000
-- **County Overdose:** rate = deaths/pop × 100,000
-- **Fentanyl:** rate = deaths/pop × 100,000 (T40.4 only)
-- **Dashboard:** overdose_rate, rx_per_capita, pct_medicaid, avg_mme_per_unit formulas
+Verified calculations:
+- Overdose rate = deaths / population x 100,000
+- Rx per capita = total_rx / population x 1,000
+- Medicaid % = medicaid_rx / total_rx x 100
+- Avg MME = quantity-weighted MME per prescription unit
+
+---
+
+## Accuracy Summary
+
+| Visualization | Data Source | Notes |
+|---------------|------------|-------|
+| County Overdose | CDC WONDER county-level | Direct CDC counts and rates |
+| Fentanyl Spread | CDC WONDER T40.4 only | Direct CDC counts, filtered to synthetic opioids |
+| Illicit Overdose | CDC drug-type, categories summed | Proxy (possible overlap across drug types) |
+| Dashboard | IQVIA + CDC merged on (county_fips, year) | Outer merge; some counties Rx-only or CDC-only |
+| MME Spread | IQVIA county panel | Quantity-weighted MME per prescription unit |

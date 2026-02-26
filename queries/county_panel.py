@@ -79,7 +79,7 @@ CROSSWALK_URL = (
 )
 CROSSWALK_LOCAL = os.path.join(
     os.path.dirname(os.path.dirname(__file__)),
-    "Datasets",
+    "Datasets", "geo",
     "zcta_county_rel_10.csv",
 )
 INCREMENTAL_DIR = os.path.join(

@@ -1,12 +1,33 @@
-# Lucy Institute Health Challenge — Medicaid & Opioid Prescribing Analysis
+# Lucy Institute Health Challenge
 
-> **Research Question:** Is there a significant difference between the way people on Medicaid are prescribed opioids versus the general population?
+## Medicaid & Opioid Prescribing Analysis
 
-## TL;DR
+> **Research Question:** Is there a significant difference between the way
+> people on Medicaid are prescribed opioids versus the general population?
 
-We analyzed **2.1 billion prescription records** (IQVIA, 1997–2018) combined with **CDC overdose mortality data** (1999–2018) and found that the "Medicaid over-prescribing" narrative is a myth. Medicaid patients receive lower doses, fewer chronic prescriptions, a narrower drug formulary, and zero access to mail-order opioids. Most critically, after 2012 the link between prescriptions and overdose deaths **broke completely** — prescriptions fell 25% while deaths rose 62% — proving that illicit opioids (heroin, fentanyl), not prescriptions, now drive the crisis.
+---
 
-**Full findings →** [FINDINGS.md](FINDINGS.md)
+### Summary
+
+We analyzed **2.1 billion prescription records** (IQVIA, 1997--2018) combined
+with **CDC overdose mortality data** (1999--2018) and **Census demographic
+data** to investigate whether Medicaid patients are over-prescribed opioids.
+
+### Key Findings
+
+1. **Medicaid patients are NOT over-prescribed.** They receive lower average
+   MME (morphine milligram equivalents), fewer chronic prescriptions, and a
+   narrower drug formulary than non-Medicaid patients.
+2. **Medicaid has zero mail-order opioids.** Non-Medicaid patients can access
+   90-day mail-order refills; Medicaid patients cannot.
+3. **The prescription--overdose link broke after 2012.** Prescriptions fell
+   ~25% nationally while overdose deaths rose ~62%, proving illicit opioids
+   (heroin, fentanyl) now drive the crisis.
+4. **Fentanyl spread geographically from the Northeast.** County-level mapping
+   shows synthetic opioid deaths concentrated in Appalachia and the Eastern
+   seaboard before spreading west.
+
+Full findings: [docs/FINDINGS.md](docs/FINDINGS.md)
 
 ---
 
@@ -14,28 +35,29 @@ We analyzed **2.1 billion prescription records** (IQVIA, 1997–2018) combined w
 
 ```
 lucyInstituteChallenge/
-│
-├── main.py                     ← CLI orchestrator — runs queries, maps, analysis
-│
-├── queries/                   ← SQL query modules (IQVIA PostgreSQL)
-├── analysis/                  ← Post-query statistical analysis
-├── visualizations/            ← Maps (Plotly) + charts (Matplotlib)
-├── cdc/                       ← CDC WONDER data loading & merging
-├── census/                    ← Census ACS loading & merging
-├── utils/                     ← DB connection & helpers
-│
-├── scripts/r/                 ← Optional R maps (Medicaid vs Non-Medicaid)
-├── Datasets/                  ← Raw data (CDC, Census, shapefiles)
-├── output/                    ← Generated CSVs, maps, plots
-├── docs/                      ← Documentation
-├── instructions/              ← Challenge instructions
-│
-├── FINDINGS.md                ← Main research deliverable
-├── DATA_STRATEGY.md           ← Database schema & query strategy
-└── requirements.txt
+|
+|-- main.py                  # CLI entry point for queries, maps, and analysis
+|-- requirements.txt         # Python dependencies
+|-- README.md                # This file
+|
+|-- visualizations/          # Active map scripts (Plotly animated HTML maps)
+|-- queries/                 # IQVIA database query modules (PostgreSQL)
+|-- cdc/                     # CDC WONDER data loading and merging
+|-- census/                  # Census ACS data loading and merging
+|-- utils/                   # Database connection and helper utilities
+|-- tests/                   # Automated data verification tests
+|
+|-- archive/                 # Archived scripts kept for reference
+|   |-- visualizations/      # Non-map chart scripts (Matplotlib)
+|   |-- analysis/            # Statistical analysis scripts
+|   +-- scripts/             # Legacy R and Python scripts
+|
+|-- Datasets/                # Raw data files (CDC, Census, geo, shapefiles)
+|-- output/                  # Generated outputs (CSVs, HTML maps, PNGs)
++-- docs/                    # Documentation, deliverables, and instructions
 ```
 
-**Full layout →** [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
+Full layout: [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
 
 ---
 
@@ -51,99 +73,93 @@ pip install -r requirements.txt
 
 ### 2. Environment Variables
 
-Create a `.env` file (gitignored) for DB overrides. Default config is in `utils/db_connect.py`.
+Create a `.env` file (gitignored) with database credentials.
+Default config is in `utils/db_connect.py`.
 
 ### 3. Datasets
 
-Place `Datasets/` in the project root (not in git if large):
+Place raw data in `Datasets/`:
 
-- **CDC WONDER:** `Datasets/cdc/` — overdose CSVs (county, state, drug type)
-- **Census ACS:** `Datasets/census/` — USAFacts, ACS tables
-- **Geo:** `Datasets/geo/us_counties_geojson.json` — county boundaries
-- **IQVIA reference:** `Datasets/IQVIA/`
+| Subfolder | Contents |
+|-----------|----------|
+| `cdc/` | CDC WONDER overdose CSVs (state, county, drug-type) |
+| `census/` | USAFacts Medicaid enrollment data |
+| `geo/` | County GeoJSON boundaries, ZCTA-to-county crosswalk |
+| `IQVIA/` | IQVIA reference documentation |
+| `ACSDT*` / `ACSST*` | Census ACS 5-year estimates (population, income, poverty, insurance, race) |
 
 ---
 
-## Running Queries
+## Running the Project
 
-All queries run through `main.py`:
+All commands go through `main.py`:
+
+### Animated Maps (no database required)
 
 ```bash
-# Core Medicaid vs Non-Medicaid (Q1–Q5)
-python main.py medicaid
+python main.py map-county       # County overdose deaths per 100K (2008-2017)
+python main.py map-fentanyl     # Fentanyl/synthetic opioid spread by county
+python main.py map-illicit      # State-level illicit overdose trends (1999-2018)
+python main.py map-dashboard    # Multi-metric county dashboard (4 layers)
+python main.py map-mme          # MME spread across counties + 5-number summary
+```
 
-# Individual queries
-python main.py q3              # State-level
-python main.py q4              # Drug-level
-python main.py q5              # Specialty-level
+Maps output to `output/cdc/` and `output/plots/` as interactive HTML files.
 
-# Extended (Q6–Q9)
-python main.py extended
-python main.py q6              # State × Year panel
-python main.py q7              # Retail vs Mail Order
+### Database Queries (requires IQVIA PostgreSQL access)
 
-# Other
-python main.py explore         # Discover payor plan categories
-python main.py pillmill        # Prescriber concentration
-python main.py county         # County-level IQVIA panel
-python main.py cdc            # Merge IQVIA + CDC overdose
-python main.py cdc-drug       # CDC drug-type panel + illicit spread
-python main.py census         # Load Census ACS
-python main.py merge          # Merge IQVIA zip + Census
+```bash
+python main.py medicaid         # Q1-Q5: Medicaid vs Non-Medicaid comparisons
+python main.py geo              # State and zip-level geographic analysis
+python main.py extended         # Q6-Q9: State x year, sales channel, monthly
+python main.py county           # County-level panel (zip-to-county aggregation)
+```
+
+### Data Merging
+
+```bash
+python main.py cdc              # Merge IQVIA state data with CDC overdose rates
+python main.py cdc-drug         # CDC drug-type breakdown + illicit spread panel
+python main.py census           # Load Census ACS tables
+python main.py merge            # Merge IQVIA zip-level data with Census demographics
+```
+
+### Archived Charts (Matplotlib)
+
+```bash
+python -m archive.visualizations.heroinVsFentanyl
+python -m archive.visualizations.divergence_plot
+python -m archive.visualizations.mme_vs_overdose_2012_2016
+python -m archive.visualizations.Medicaid_Timeline
 ```
 
 ---
 
-## Running Maps & Visualizations
+## How the Code Maps to Findings
 
-### Animated Maps (Plotly → HTML)
-
-```bash
-python main.py map-illicit     # State illicit overdose (1999–2018)
-python main.py map-county      # County overdose (2008–2017)
-python main.py map-fentanyl   # County fentanyl spread
-python main.py map-dashboard  # Multi-metric county map
-```
-
-Outputs: `output/cdc/*.html`, `output/county/*.html` — open in browser.
-
-### Charts (Matplotlib)
-
-```bash
-python scripts/python/_test_chart.py     # Rx vs Overdose indexed chart → PNG
-python scripts/python/seg_bar_graph_rough.py  # Stacked bar: prescriptions by year
-python -m visualizations.heroinVsFentanyl
-python -m visualizations.prescriptionsVsOverdose
-python -m visualizations.Medicaid_Timeline
-python -m visualizations.mme_vs_deaths_scatterplot
-python -m visualizations.mme_vs_overdose_2012_2016
-```
-
-**Full guide →** [docs/VISUALIZATIONS.md](docs/VISUALIZATIONS.md)
+| Finding | Code | Output |
+|---------|------|--------|
+| Overdose deaths rising despite Rx decline | `archive/visualizations/divergence_plot.py` | `output/plots/divergence_plot.png` |
+| County overdose death rates (2008--2017) | `visualizations/county_overdose_spread.py` | `output/cdc/county_overdose_spread_map.html` |
+| Fentanyl geographic spread | `visualizations/fentanyl_spread.py` | `output/cdc/fentanyl_spread_map.html` |
+| Heroin vs fentanyl crossover | `archive/visualizations/heroinVsFentanyl.py` | `output/plots/heroin_vs_fentanyl.png` |
+| MME distribution across counties | `visualizations/mme_spread_map.py` | `output/plots/mme_spread_map.html` |
+| Multi-metric county dashboard | `visualizations/county_dashboard_map.py` | `output/county/county_dashboard_map.html` |
+| Medicaid vs Non-Medicaid Rx volume | `queries/medicaid_vs_general.py` | `output/iqvia_core/` CSVs |
+| State-level Rx vs overdose correlation | `cdc/merge_iqvia_cdc.py` | `output/cdc/iqvia_cdc_merged_by_state.csv` |
+| Medicaid Rx timeline vs enrollment | `archive/visualizations/Medicaid_Timeline.py` | `output/plots/medicaid_rx_vs_enrollment_timeline.png` |
+| Illicit overdose state spread | `visualizations/illicit_overdose_spread.py` | `output/cdc/illicit_overdose_spread_map.html` |
 
 ---
 
-## Running Analysis
-
-After queries produce CSVs in `output/`:
+## Testing
 
 ```bash
-python -m analysis.deep_analysis          # Q1–Q5 + CDC cross-analysis
-python -m analysis.extended_analysis     # Q6/Q7 analysis
-python -m analysis.bridge_analysis       # Integrated findings
-python -m analysis.what_happened_2012    # 2012 inflection forensics
-python -m analysis.check_2018            # 2018 truncation check
+python -m pytest tests/ -v
 ```
 
----
-
-## No Database Required
-
-These run from CSV only (no IQVIA connection):
-
-- `map-county`, `map-fentanyl` (CDC data in repo)
-- `map-illicit`, `map-dashboard` (if `cdc-drug` / `county` run previously)
-- All chart scripts (if input CSVs exist)
+Automated tests verify that visualization data matches source formulas:
+overdose rates, Rx per capita, Medicaid percentages, and MME calculations.
 
 ---
 
@@ -151,32 +167,35 @@ These run from CSV only (no IQVIA connection):
 
 | Package | Purpose |
 |---------|---------|
-| pandas | Data manipulation |
-| numpy | Numerical computation |
-| scipy | Statistical tests |
-| matplotlib | Charts |
-| plotly | Interactive maps |
-| psycopg2-binary | PostgreSQL |
-| python-dotenv | Environment variables |
+| `pandas` | Data manipulation and aggregation |
+| `numpy` | Numerical computation |
+| `scipy` | Statistical tests (t-tests, correlations) |
+| `matplotlib` | Static charts and figures |
+| `plotly` | Interactive animated choropleth maps |
+| `psycopg2-binary` | PostgreSQL database connection |
+| `python-dotenv` | Environment variable loading |
 
 ---
 
 ## Data Notes
 
-- **IQVIA:** 2.1B rows on AWS RDS PostgreSQL (read-only)
-- **Medicaid:** 71 payor plan IDs containing "medicaid"
-- **Opioids:** 3,959 product groups with `drug.usc LIKE '022%'`
-- **2018:** Truncated (~3.6 months) — use 1997–2017 for trends
-- **IQVIA raw:** `new_rx`, `total_rx`, `new_qty`, `total_qty` ÷ 1000
+- **IQVIA:** 2.1B prescription rows on AWS RDS PostgreSQL (read-only access)
+- **Medicaid identification:** 71 payor plan IDs containing "medicaid"
+- **Opioid filter:** 3,959 product groups where `drug.usc LIKE '022%'`
+- **2018 data:** Truncated at ~3.6 months -- all trend analyses use 1997--2017
+- **IQVIA scaling:** Raw columns (`new_rx`, `total_rx`, `new_qty`, `total_qty`) are divided by 1,000
+- **CDC suppression:** County death counts < 10 are suppressed for privacy
 
 ---
 
 ## Documentation
 
-| Doc | Description |
-|-----|-------------|
-| [docs/VISUALIZATIONS.md](docs/VISUALIZATIONS.md) | How to run every map and chart |
-| [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) | Full directory layout |
-| [docs/DATA_FLOW.md](docs/DATA_FLOW.md) | Data dependencies & query→output mapping |
-| [DATA_STRATEGY.md](DATA_STRATEGY.md) | Database schema & query strategy |
-| [Datasets/DATA_CATALOG.md](Datasets/DATA_CATALOG.md) | Data catalog |
+| Document | Description |
+|----------|-------------|
+| [docs/FINDINGS.md](docs/FINDINGS.md) | Complete research findings and statistical results |
+| [docs/VISUALIZATION_GUIDE.md](docs/VISUALIZATION_GUIDE.md) | What each map shows and how to regenerate |
+| [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) | Full directory and file reference |
+| [docs/DATA_FLOW.md](docs/DATA_FLOW.md) | Data pipeline and query-to-output mapping |
+| [docs/DATA_GUIDE.md](docs/DATA_GUIDE.md) | Dataset descriptions and sources |
+| [docs/DATA_STRATEGY.md](docs/DATA_STRATEGY.md) | Database schema and query optimization |
+| [Datasets/DATA_CATALOG.md](Datasets/DATA_CATALOG.md) | Raw data file catalog |
